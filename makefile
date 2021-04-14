@@ -1,4 +1,5 @@
 CC := gcc
+CCP := g++
 BIN := edd_scheduler
 
 BUILD_DIR := build
@@ -16,6 +17,7 @@ INCLUDE_DIRS += -I${FREERTOS_DIR}/Source/portable/ThirdParty/GCC/Posix/utils
 #INCLUDE_DIRS += -I${FREERTOS_PLUS_DIR}/Source/FreeRTOS-Plus-Trace/Include
 
 SOURCE_FILES := $(wildcard *.c)
+SOURCE_FILES += $(wildcard *.cpp)
 SOURCE_FILES += $(wildcard ${FREERTOS_DIR}/Source/*.c)
 # Memory manager (use malloc() / free() )
 SOURCE_FILES += ${FREERTOS_DIR}/Source/portable/MemMang/heap_3.c
@@ -35,22 +37,32 @@ SOURCE_FILES += ${FREERTOS_DIR}/Source/portable/ThirdParty/GCC/Posix/port.c
 CFLAGS := -ggdb3 -O0 -DprojCOVERAGE_TEST=0 -D_WINDOWS_
 LDFLAGS := -ggdb3 -O0 -pthread
 
-OBJ_FILES = $(SOURCE_FILES:%.c=$(BUILD_DIR)/%.o)
+C_OBJ_FILES = $(SOURCE_FILES:%.c=$(BUILD_DIR)/%.o)
+CPP_OBJ_FILES = $(SOURCE_FILES:%.cpp=$(BUILD_DIR)/%.o)
 
-DEP_FILE = $(OBJ_FILES:%.o=%.d)
+C_DEP_FILE = $(C_OBJ_FILES:%.o=%.d)
+#CPP_DEP_FILE = $(CPP_OBJ_FILES:%.o=%.d) #this line is problem?
 
 ${BIN} : $(BUILD_DIR)/$(BIN)
 
-${BUILD_DIR}/${BIN} : ${OBJ_FILES}
+${BUILD_DIR}/${BIN} : ${C_OBJ_FILES}# ${CPP_OBJ_FILES}
 	-mkdir -p ${@D}
 	$(CC) $^ $(CFLAGS) $(INCLUDE_DIRS) ${LDFLAGS} -o $@
 
+# ${BUILD_DIR}/${BIN} : ${CPP_OBJ_FILES}
+# 	-mkdir -p ${@D}
+# 	$(CCP) $^ $(CFLAGS) $(INCLUDE_DIRS) ${LDFLAGS} -o $@
 
--include ${DEP_FILE}
+
+-include ${C_DEP_FILE} #${CPP_DEP_FILE}
 
 ${BUILD_DIR}/%.o : %.c
 	-mkdir -p $(@D)
 	$(CC) $(CFLAGS) ${INCLUDE_DIRS} -MMD -c $< -o $@
+
+# ${BUILD_DIR}/%.o : %.cpp
+# 	-mkdir -p $(@D)
+# 	$(CCP) $(CFLAGS) ${INCLUDE_DIRS} -MMD -c $< -o $@
 
 .PHONY: clean
 
