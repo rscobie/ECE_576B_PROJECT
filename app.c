@@ -172,21 +172,6 @@ void activity_task(void* pvParameters){
 }
 
 void hr_monitor_task(void* pvParameters){
-	int newval;
-	
-	
-
-	
-    ( void ) pvParameters;
-
-    for(;;){
-     		QueueReceive(hrm_task_handle, &newval, portMAX_DELAY);
-                    
-                vTaskSuspend(NULL);
-            }
-        }
-    }
-
 
 }
 
