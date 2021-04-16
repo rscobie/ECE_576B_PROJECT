@@ -178,7 +178,13 @@ void hr_monitor_task(void* pvParameters) {
 }
 
 void app_task(void* pvParameters) {
-
+    task_msg_t in_message = {};
+    task_msg_t out_message = {};
+    while(1){
+        switch(in_message.type){
+            
+        }
+    }
 }
 
 void ui_task(void* pvParameters) {
