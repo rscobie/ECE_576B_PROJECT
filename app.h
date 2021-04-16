@@ -27,7 +27,7 @@ typedef uint32_t imu_sample_t; //magnitude of acceleration vector
 #define APERIODIC_PERIOD 0
 
 void hw_timer_callback(TimerHandle_t xTimer);
-void hardware_task (void* pvParameters);
+void hardware_task(void* pvParameters);
 void init_app();
 void generator_task(void* pvParameters);
 void activity_task(void* pvParameters);
