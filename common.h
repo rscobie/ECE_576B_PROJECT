@@ -45,8 +45,8 @@ typedef enum {
 
 typedef enum {
     HW_NEXT_EVENT,
-	HW_IMU_REQUEST,
-	HW_PPG_REQUEST,
+    HW_IMU_REQUEST,
+    HW_PPG_REQUEST,
     HW_SCREEN_UPDATE,
     HW_NUM_MESSAGES,
     ACT_IMU_DATA,
@@ -54,6 +54,8 @@ typedef enum {
     HRM_PPG_DATA,
     HRM_NUM_MESSAGES,
     APP_NUM_MESSAGES,
+    APP_REMINDER, 
+    APP_HEARTRATE,
     UI_LONG_BUTTON_PRESS,
     UI_SHORT_BUTTON_PRESS,
     UI_NUM_MESSAGES,
@@ -68,16 +70,16 @@ typedef enum {
 } message_type_t;
 
 typedef struct edd_task {
-	time_t deadline;
-	bool periodic;
+    time_t deadline;
+    bool periodic;
     time_t period;
     time_t relative_deadline;
-	void (*task_func)(void*);
+    void (*task_func)(void*);
     xTaskHandle task;
 } edd_task_t;
 
 typedef struct task_message_struct {
-	message_type_t type;
+    message_type_t type;
     edd_task_t* sender;
     byte data[MSG_DATA_SIZE];
 } task_msg_t;
