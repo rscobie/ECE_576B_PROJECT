@@ -184,6 +184,7 @@ void app_task(void* pvParameters) {
 void ui_task(void* pvParameters) {
     task_msg_t message = {};
     task_msg_t msg = {};
+    char messageStr[30]; 
 
     while (1) {
         xQueueReceive(ui_queue_handle, &message, portMAX_DELAY); //wait for message
@@ -193,26 +194,32 @@ void ui_task(void* pvParameters) {
             // hardware events 
         case UI_SHORT_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
-            //msg.data = (char*) "screen";
+            strcpy(messageStr, "Screen toggle on/off"); 
+            memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
             break;
 
         case UI_LONG_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
-            //msg.data = "screen";
+            strcpy(messageStr, "Device shut off"); 
+            memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
             break;
 
             // app events 
         case APP_REMINDER:
             msg.type = HW_SCREEN_UPDATE;
-            //msg.data = "screen";
+            strcpy(messageStr, "Reminder from App: "); 
+            strcat(messageStr, message.data);
+            memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
             break;
 
         case APP_HEARTRATE:
             msg.type = HW_SCREEN_UPDATE;
-            //msg.data = "screen";
+            strcpy(messageStr, "Heart rate: "); 
+            strcat(messageStr, message.data);
+            memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
             break;
         }

@@ -10,6 +10,8 @@ This file contains common definitions that are used throughout the program
 #include <task.h>
 #include <queue.h>
 #include <timers.h>
+#include <stdio.h>
+#include <string.h>
 
 //if defined, the EDD scheduler will be used. Otherwise, the vanilla FreeRTOS scheduler will be used.
 //by default, the FreeRTOS scheduler will use round robin for tasks of the same priority
@@ -21,7 +23,7 @@ This file contains common definitions that are used throughout the program
 #define TASK_STACK_SIZE 1024 //bytes
 
 //TODO: change this if necessary
-#define MSG_DATA_SIZE 10 //max size in bytes of any data sent via message.
+#define MSG_DATA_SIZE 12 //max size in bytes of any data sent via message.
 
 typedef uint32_t time_t;
 #ifndef __cplusplus //don't include this block if we're compiling with C++
