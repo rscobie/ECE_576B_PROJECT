@@ -109,7 +109,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
                 //send message to UI Task
                 task_msg_t msg = {};
                 msg.type = UI_SHORT_BUTTON_PRESS;
-                xQueueSend(ui_task_handle, &msg, portMAX_DELAY);
+                xQueueSend(ui_queue_handle, &msg, portMAX_DELAY);
             }
             break;
             case HW_EVT_LONG_PRESS:
@@ -117,7 +117,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
                 //send message to UI Task
                 task_msg_t msg = {};
                 msg.type = UI_LONG_BUTTON_PRESS;
-                xQueueSend(ui_task_handle, &msg, portMAX_DELAY);
+                xQueueSend(ui_queue_handle, &msg, portMAX_DELAY);
             }
             break;
             }
@@ -134,7 +134,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
             if (curr_imu >= NUM_IMU_SAMPLES) {
                 curr_imu = 0;
             }
-            xQueueSend(act_task_handle, &msg, portMAX_DELAY);
+            xQueueSend(act_queue_handle, &msg, portMAX_DELAY);
         }
         break;
         case HW_PPG_REQUEST:
@@ -147,7 +147,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
             if (curr_ppg >= NUM_PPG_SAMPLES) {
                 curr_ppg = 0;
             }
-            xQueueSend(hrm_task_handle, &msg, portMAX_DELAY);
+            xQueueSend(hrm_queue_handle, &msg, portMAX_DELAY);
         }
         break;
         case HW_SCREEN_UPDATE:
