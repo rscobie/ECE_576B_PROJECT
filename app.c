@@ -170,6 +170,40 @@ void generator_task(void* pvParameters) {
 }
 
 void activity_task(void* pvParameters) {
+    task_msg_t message = {};
+    task_msg_t msg = {};
+    char messageStr[30];
+    while(1){
+    	xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);//give me my msg hw
+	xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message
+	if(sample shows minimal movement){
+	    msg.type = APP_ACT_TYPE_UPDATE;
+            strcpy(messageStr, "Sleeping");
+            memcpy(msg.data, messageStr, strlen(messageStr)+1);
+            xQueueSend(app_task_handle, &msg, portMAX_DELAY);		
+	}else if(sample shows mediocre movement)
+	{
+	    msg.type = APP_ACT_TYPE_UPDATE;
+	    strcpy(messageStr, "Sedentary");
+	    memcpy(msg.data, messageStr, strlen(messageStr)+1);
+	    xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+	}else if(sample shows maximal movement)
+	{
+	    msg.type = APP_ACT_TYPE_UPDATE;
+	    strcpy(messageStr, "Exercise");
+	    memcpy(msg.data, messageStr, strlen(messageStr)+1);
+	    xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+	}else if(activity_type != past_activity_type)
+	{
+	    //send notice of activity change to app task
+	    //create message
+	    message.data = activity_type
+	    past_activity_type = activity_type
+	}
+
+
+    }
+    task_delay();
 
 }
 
