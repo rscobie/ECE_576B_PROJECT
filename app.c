@@ -173,7 +173,45 @@ void activity_task(void* pvParameters) {
 
 }
 
-void hr_monitor_task(void* pvParameters) {
+void hr_monitor_task(void* pvParameters){
+	task_msg_t message = {};
+	task_msg_t msg = {};
+	int tensampleold[10];
+	int tensamplenew[10];
+	static ppg_sample_t ppg_samples[NUM_PPG_SAMPLES];
+	double hrdata=0;
+	//What do I even make this
+	//ask rory what he wanted for the task_delay 
+	const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
+
+	while(1){
+		
+		message.type=HRM_PPG_DATA;
+		message.data = NULL;
+		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);
+		xQueueReceive(hrm_queue_handle, &message, portMAX_DELAY);
+		for(int j = 0; j<10; j++){
+			tensampleold[j] = tensamplenew[j];
+		}
+		
+		for(int i = 0; i<9; i++){
+		tensamplenew[i]=tensampleold[i+1];task
+		}
+
+		tensamplenew[9]= (int) message.data;
+
+		for(int counter = 0; counter<9; counter++){
+		hrdata += tensamplenew[counter+1]-tensamplenew[counter];
+		}
+		hrdata = hrdata/9;
+		hrdata = 60000/hrdata;
+		msg.type = APP_HEARTRATE;
+		memcpy(msg.data, hrdata, sizeof(hrdata));
+		
+		xQueueSend(app_task_handle, &msg, portMAX_DELAY);	
+		vTaskDelay(xDelay);
+		
+	}
 
 }
 
