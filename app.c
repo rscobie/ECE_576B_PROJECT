@@ -81,7 +81,7 @@ void hw_timer_callback(TimerHandle_t xTimer) {
     //Send NEXT_EVENT message to hardware task
     task_msg_t msg = {};
     msg.type = HW_NEXT_EVENT;
-    xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+    xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
 }
 
 // aperiodic
@@ -152,7 +152,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
         break;
         case HW_SCREEN_UPDATE:
             //print “screen” to console. “Screen” is just a string sent in the data field of this task
-            printf((char*)message.data);
+            printf("%s", (char*)message.data);
             break;
         }
     }
@@ -170,6 +170,7 @@ void generator_task(void* pvParameters) {
 }
 
 void activity_task(void* pvParameters) {
+    /*
     task_msg_t message = {};
     task_msg_t msg = {};
     char messageStr[30];
@@ -204,6 +205,7 @@ void activity_task(void* pvParameters) {
 
     }
     task_delay();
+    */
 
 }
 
@@ -221,7 +223,7 @@ void hr_monitor_task(void* pvParameters){
 	while(1){
 		
 		message.type=HRM_PPG_DATA;
-		message.data = NULL;
+
 		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);
 		xQueueReceive(hrm_queue_handle, &message, portMAX_DELAY);
 		for(int j = 0; j<10; j++){
@@ -229,7 +231,7 @@ void hr_monitor_task(void* pvParameters){
 		}
 		
 		for(int i = 0; i<9; i++){
-		tensamplenew[i]=tensampleold[i+1];task
+		tensamplenew[i]=tensampleold[i+1];
 		}
 
 		tensamplenew[9]= (int) message.data;
@@ -240,9 +242,9 @@ void hr_monitor_task(void* pvParameters){
 		hrdata = hrdata/9;
 		hrdata = 60000/hrdata;
 		msg.type = APP_HEARTRATE;
-		memcpy(msg.data, hrdata, sizeof(hrdata));
+		memcpy(msg.data, &hrdata, sizeof(hrdata));
 		
-		xQueueSend(app_task_handle, &msg, portMAX_DELAY);	
+		xQueueSend(app_queue_handle, &msg, portMAX_DELAY);	
 		vTaskDelay(xDelay);
 		
 	}
@@ -268,14 +270,14 @@ void ui_task(void* pvParameters) {
             msg.type = HW_SCREEN_UPDATE;
             strcpy(messageStr, "Screen toggle on/off"); 
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
-            xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+            xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
 
         case UI_LONG_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
             strcpy(messageStr, "Device shut off"); 
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
-            xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+            xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
 
             // app events 
@@ -284,7 +286,7 @@ void ui_task(void* pvParameters) {
             strcpy(messageStr, "Reminder from App: "); 
             strcat(messageStr, message.data);
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
-            xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+            xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
 
         case APP_HEARTRATE:
@@ -292,7 +294,7 @@ void ui_task(void* pvParameters) {
             strcpy(messageStr, "Heart rate: "); 
             strcat(messageStr, message.data);
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
-            xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+            xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
         }
     }

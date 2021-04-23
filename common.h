@@ -34,7 +34,8 @@ typedef uint8_t byte;
 #endif
 
 typedef enum {
-    EDD_PRIORITY = configTIMER_TASK_PRIORITY - 1, //scheduler is just below timer
+    MONITOR_TASK_PRIORITY = configTIMER_TASK_PRIORITY - 1, //scheduler is just below timer
+    EDD_PRIORITY = MONITOR_TASK_PRIORITY - 1,
     GENERATOR_PRIORITY = EDD_PRIORITY - 1,
     HW_PRIORITY = GENERATOR_PRIORITY - 1, //hardware is just below scheduler but above app
     BASE_APP_PRIORITY = HW_PRIORITY - 1 //highest app task priority
