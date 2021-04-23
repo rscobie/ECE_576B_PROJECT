@@ -15,7 +15,7 @@ static int curr_evt = 0;
 //stuff for activity task
 static xTaskHandle act_task_handle;
 static xQueueHandle act_queue_handle;
-
+enum activityType{Sleeping, Sedentary, Exercise, NotChanged};//TODO: Maybe better to change to common.h
 //stuff for hr monitor task
 static xTaskHandle hrm_task_handle;
 static xQueueHandle hrm_queue_handle;
@@ -170,42 +170,34 @@ void generator_task(void* pvParameters) {
 }
 
 void activity_task(void* pvParameters) {
-    /*
-    task_msg_t message = {};
-    task_msg_t msg = {};
-    char messageStr[30];
-    while(1){
-    	xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);//give me my msg hw
-	xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message
-	if(sample shows minimal movement){
-	    msg.type = APP_ACT_TYPE_UPDATE;
-            strcpy(messageStr, "Sleeping");
-            memcpy(msg.data, messageStr, strlen(messageStr)+1);
-            xQueueSend(app_task_handle, &msg, portMAX_DELAY);		
-	}else if(sample shows mediocre movement)
-	{
-	    msg.type = APP_ACT_TYPE_UPDATE;
-	    strcpy(messageStr, "Sedentary");
-	    memcpy(msg.data, messageStr, strlen(messageStr)+1);
-	    xQueueSend(app_task_handle, &msg, portMAX_DELAY);
-	}else if(sample shows maximal movement)
-	{
-	    msg.type = APP_ACT_TYPE_UPDATE;
-	    strcpy(messageStr, "Exercise");
-	    memcpy(msg.data, messageStr, strlen(messageStr)+1);
-	    xQueueSend(app_task_handle, &msg, portMAX_DELAY);
-	}else if(activity_type != past_activity_type)
-	{
-	    //send notice of activity change to app task
-	    //create message
-	    message.data = activity_type
-	    past_activity_type = activity_type
+	task_msg_t message = {};
+	task_msg_t msg = {};
+	const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
+
+	while(1){
+		message.type = HW_IMU_REQUEST;
+		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);//give me my msg hw
+		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message						
+		switch((int)message.data){
+			case Sleeping:
+				msg.type = ACT_NUM_MESSAGES;
+				memcpy(msg.data, Sleeping, sizeof(int));
+				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+			case Sedentary:
+				msg.type = ACT_NUM_MESSAGES;
+				memcpy(msg.data, Sedentary, sizeof(int));
+				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+			case Exercise:
+				msg.type = ACT_NUM_MESSAGES;
+				memcpy(msg.data, Exercise, sizeof(int));
+				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+		    	case NotChanged:
+				msg.type = ACT_NUM_MESSAGES;
+				memcpy(msg.data, NotChanged, sizeof(int));
+				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+		}
+		vTaskDelay(xDelay);
 	}
-
-
-    }
-    task_delay();
-    */
 
 }
 
