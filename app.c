@@ -180,19 +180,19 @@ void activity_task(void* pvParameters) {
 		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message						
 		switch((int)message.data){
 			case Sleeping:
-				msg.type = ACT_NUM_MESSAGES;
+				msg.type = APP_ACT_TYPE_UPDATE;
 				memcpy(msg.data, Sleeping, sizeof(int));
 				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
 			case Sedentary:
-				msg.type = ACT_NUM_MESSAGES;
+				msg.type = APP_ACT_TYPE_UPDATE;
 				memcpy(msg.data, Sedentary, sizeof(int));
 				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
 			case Exercise:
-				msg.type = ACT_NUM_MESSAGES;
+				msg.type = APP_ACT_TYPE_UPDATE;
 				memcpy(msg.data, Exercise, sizeof(int));
 				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
 		    	case NotChanged:
-				msg.type = ACT_NUM_MESSAGES;
+				msg.type = APP_ACT_TYPE_UPDATE;
 				memcpy(msg.data, NotChanged, sizeof(int));
 				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
 		}
