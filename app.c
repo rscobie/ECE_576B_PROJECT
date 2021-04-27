@@ -15,7 +15,7 @@ static int curr_evt = 0;
 //stuff for activity task
 static xTaskHandle act_task_handle;
 static xQueueHandle act_queue_handle;
-
+enum activityType{Sleeping, Sedentary, Exercise, NotChanged};//TODO: Maybe better to change to common.h
 //stuff for hr monitor task
 static xTaskHandle hrm_task_handle;
 static xQueueHandle hrm_queue_handle;
@@ -81,7 +81,7 @@ void hw_timer_callback(TimerHandle_t xTimer) {
     //Send NEXT_EVENT message to hardware task
     task_msg_t msg = {};
     msg.type = HW_NEXT_EVENT;
-    xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+    xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
 }
 
 // aperiodic
@@ -152,7 +152,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
         break;
         case HW_SCREEN_UPDATE:
             //print “screen” to console. “Screen” is just a string sent in the data field of this task
-            printf((char*)message.data);
+            printf("%s", (char*)message.data);
             break;
         }
     }
@@ -170,10 +170,76 @@ void generator_task(void* pvParameters) {
 }
 
 void activity_task(void* pvParameters) {
+	task_msg_t message = {};
+	task_msg_t msg = {};
+	const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
+
+	while(1){
+		message.type = HW_IMU_REQUEST;
+		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);//give me my msg hw
+		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message						
+		switch((int)message.data){
+			case Sleeping:
+				msg.type = APP_ACT_TYPE_UPDATE;
+				memcpy(msg.data, Sleeping, sizeof(int));
+				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+			case Sedentary:
+				msg.type = APP_ACT_TYPE_UPDATE;
+				memcpy(msg.data, Sedentary, sizeof(int));
+				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+			case Exercise:
+				msg.type = APP_ACT_TYPE_UPDATE;
+				memcpy(msg.data, Exercise, sizeof(int));
+				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+		    	case NotChanged:
+				msg.type = APP_ACT_TYPE_UPDATE;
+				memcpy(msg.data, NotChanged, sizeof(int));
+				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+		}
+		vTaskDelay(xDelay);
+	}
 
 }
 
-void hr_monitor_task(void* pvParameters) {
+void hr_monitor_task(void* pvParameters){
+	task_msg_t message = {};
+	task_msg_t msg = {};
+	int tensampleold[10];
+	int tensamplenew[10];
+	static ppg_sample_t ppg_samples[NUM_PPG_SAMPLES];
+	double hrdata=0;
+	//What do I even make this
+	//ask rory what he wanted for the task_delay 
+	const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
+
+	while(1){
+		
+		message.type=HRM_PPG_DATA;
+
+		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);
+		xQueueReceive(hrm_queue_handle, &message, portMAX_DELAY);
+		for(int j = 0; j<10; j++){
+			tensampleold[j] = tensamplenew[j];
+		}
+		
+		for(int i = 0; i<9; i++){
+		tensamplenew[i]=tensampleold[i+1];
+		}
+
+		tensamplenew[9]= (int) message.data;
+
+		for(int counter = 0; counter<9; counter++){
+		hrdata += tensamplenew[counter+1]-tensamplenew[counter];
+		}
+		hrdata = hrdata/9;
+		hrdata = 60000/hrdata;
+		msg.type = APP_HEARTRATE;
+		memcpy(msg.data, &hrdata, sizeof(hrdata));
+		
+		xQueueSend(app_queue_handle, &msg, portMAX_DELAY);	
+		vTaskDelay(xDelay);
+		
+	}
 
 }
 
@@ -190,6 +256,7 @@ void app_task(void* pvParameters) {
 void ui_task(void* pvParameters) {
     task_msg_t message = {};
     task_msg_t msg = {};
+    char messageStr[30]; 
 
     while (1) {
         xQueueReceive(ui_queue_handle, &message, portMAX_DELAY); //wait for message
@@ -199,27 +266,33 @@ void ui_task(void* pvParameters) {
             // hardware events 
         case UI_SHORT_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
-            //msg.data = (char*) "screen";
-            xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+            strcpy(messageStr, "Screen toggle on/off"); 
+            memcpy(msg.data, messageStr, strlen(messageStr)+1);
+            xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
 
         case UI_LONG_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
-            //msg.data = "screen";
-            xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+            strcpy(messageStr, "Device shut off"); 
+            memcpy(msg.data, messageStr, strlen(messageStr)+1);
+            xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
 
             // app events 
         case APP_REMINDER:
             msg.type = HW_SCREEN_UPDATE;
-            //msg.data = "screen";
-            xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+            strcpy(messageStr, "Reminder from App: "); 
+            strcat(messageStr, message.data);
+            memcpy(msg.data, messageStr, strlen(messageStr)+1);
+            xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
 
         case APP_HEARTRATE:
             msg.type = HW_SCREEN_UPDATE;
-            //msg.data = "screen";
-            xQueueSend(hw_task_handle, &msg, portMAX_DELAY);
+            strcpy(messageStr, "Heart rate: "); 
+            strcat(messageStr, message.data);
+            memcpy(msg.data, messageStr, strlen(messageStr)+1);
+            xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
         }
     }

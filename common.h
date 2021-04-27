@@ -10,6 +10,8 @@ This file contains common definitions that are used throughout the program
 #include <task.h>
 #include <queue.h>
 #include <timers.h>
+#include <stdio.h>
+#include <string.h>
 
 //if defined, the EDD scheduler will be used. Otherwise, the vanilla FreeRTOS scheduler will be used.
 //by default, the FreeRTOS scheduler will use round robin for tasks of the same priority
@@ -21,7 +23,7 @@ This file contains common definitions that are used throughout the program
 #define TASK_STACK_SIZE 1024 //bytes
 
 //TODO: change this if necessary
-#define MSG_DATA_SIZE 10 //max size in bytes of any data sent via message.
+#define MSG_DATA_SIZE 12 //max size in bytes of any data sent via message.
 
 typedef uint32_t time_t;
 #ifndef __cplusplus //don't include this block if we're compiling with C++
@@ -32,7 +34,8 @@ typedef uint8_t byte;
 #endif
 
 typedef enum {
-    EDD_PRIORITY = configTIMER_TASK_PRIORITY - 1, //scheduler is just below timer
+    MONITOR_TASK_PRIORITY = configTIMER_TASK_PRIORITY - 1, //scheduler is just below timer
+    EDD_PRIORITY = MONITOR_TASK_PRIORITY - 1,
     GENERATOR_PRIORITY = EDD_PRIORITY - 1,
     HW_PRIORITY = GENERATOR_PRIORITY - 1, //hardware is just below scheduler but above app
     BASE_APP_PRIORITY = HW_PRIORITY - 1 //highest app task priority
@@ -56,6 +59,7 @@ typedef enum {
     APP_NUM_MESSAGES,
     APP_REMINDER, 
     APP_HEARTRATE,
+    APP_ACT_TYPE_UPDATE,
     UI_LONG_BUTTON_PRESS,
     UI_SHORT_BUTTON_PRESS,
     UI_NUM_MESSAGES,

@@ -169,3 +169,29 @@ void task_delete(edd_task_t* sender){
     //TODO: I think we can skip waiting for reply?
 	vTaskDelete ( sender->task );
 }
+
+void monitor_task(void* pvParameters)
+{
+    const TickType_t xDelay = 100 / portTICK_PERIOD_MS;
+    time_t current_time = xTaskGetTickCount();
+
+    for (;;)
+    {
+        current_time = xTaskGetTickCount();
+
+        if (current_time < MAX_TIME)
+        {
+            printf("Current time: %d ms\n", current_time);
+
+            srand(current_time);
+
+            vTaskDelay(xDelay);
+        }
+        else {
+            printf("Application runtime has exceeded %d ms\n", MAX_TIME);
+            printf("Current runtime %d ms\n", current_time);
+            //vTaskDelete(xSADcalcHandle);
+            //vTaskDelete(NULL);
+        }
+    }
+}
