@@ -3,10 +3,10 @@
 static edd_task_t* task_priority_queue[NUM_APP_TASKS];
 
 void init_scheduler(){
-    xQueueCreate(10, sizeof(task_msg_t));
+    scheduler_queue_handle = xQueueCreate(10, sizeof(task_msg_t));
     //init priority queue
     for(int i = 0; i < NUM_APP_TASKS; ++i){
-        task_priority_queue[i]->task_func = NULL; //no function, indicates inactive
+        task_priority_queue[i] = NULL; //no function, indicates inactive
     }
 }
 
@@ -58,7 +58,7 @@ void scheduler_task(void* pvParameters){
         }
         //update priorities here
         for(int i = 0; i < NUM_APP_TASKS; ++i){
-            if(task_priority_queue[i]->task_func == NULL){
+            if(task_priority_queue[i] == NULL){
                 break;
             }
             vTaskPrioritySet(task_priority_queue[i]->task, BASE_APP_PRIORITY - i);
@@ -73,7 +73,7 @@ void deadline_insertion( edd_task_t* sender ){
 	//Insert task_handler into the vector task_priority_queue //first deadline is first element
     int index = 0;
     for(int i = 0; i < NUM_APP_TASKS; ++i){
-        if(task_priority_queue[i]->deadline > sender->deadline || sender->task_func == NULL){
+        if(task_priority_queue[i] == NULL || task_priority_queue[i]->deadline > sender->deadline){
             index = i;
             break;
         }
@@ -94,14 +94,14 @@ void deadline_removal(edd_task_t* sender ){
 	//Locate the task and Delete the task_handler from the vector,
     int index = 0;
     for(int i = 0; i < NUM_APP_TASKS; ++i){
-        if(task_priority_queue[i]->task == sender->task || sender->task_func == NULL){
+        if(task_priority_queue[i] == NULL || task_priority_queue[i]->task == sender->task){
             index = i;
             break;
         }
     }
     for(int i = index; i < NUM_APP_TASKS; ++i){
         if(i == NUM_APP_TASKS - 1){
-            task_priority_queue[i]->task_func = NULL; //no function, indicates inactive
+            task_priority_queue[i] = NULL; // indicates inactive
             break;
         }
         task_priority_queue[i] = task_priority_queue[i+1];
