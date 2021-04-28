@@ -17,7 +17,7 @@ void scheduler_task(void* pvParameters){
         switch (message.type) {
             case EDD_TASK_CREATE: 
             // call deadline_insertion
-            deadline_insertion((edd_task_t*)message.data);
+            deadline_insertion((edd_task_t*)message.sender);
             break;
             case EDD_TASK_PERIODIC_DELAY: //sent by periodic task whenever it waits until next period
             // Recalculate deadline based on period (add period to deadline) 
@@ -61,7 +61,7 @@ void scheduler_task(void* pvParameters){
             if(task_priority_queue[i] == NULL){
                 break;
             }
-            vTaskPrioritySet(task_priority_queue[i]->task, BASE_APP_PRIORITY - i);
+            vTaskPrioritySet(*(task_priority_queue[i]->task), BASE_APP_PRIORITY - i);
         }
         // send reply to messenger
         //TODO: I think we can skip reply? 
