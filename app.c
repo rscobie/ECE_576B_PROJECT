@@ -210,12 +210,12 @@ void activity_task(void* pvParameters) {
         new = new /10;
 
         if(new!=old){		
-            if(0<new<sleeping){
+            if(new<sleeping){
                      msg.type = APP_ACT_TYPE_UPDATE;
                     memcpy(msg.data, &enum1, sizeof(int));
                     xQueueSend(app_task_handle, &msg, portMAX_DELAY);
             }
-            else if(sleeping<new<sedentary){
+            else if(new<sedentary){
                      msg.type = APP_ACT_TYPE_UPDATE;
                     memcpy(msg.data, &enum2, sizeof(int));
                     xQueueSend(app_task_handle, &msg, portMAX_DELAY);
