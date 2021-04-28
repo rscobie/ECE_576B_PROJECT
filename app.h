@@ -2,6 +2,7 @@
 #define APP_H
 
 #include "common.h"
+#include "stdint.h"
 
 /*
  * hardware task definitions

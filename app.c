@@ -15,7 +15,7 @@ static int curr_evt = 0;
 //stuff for activity task
 static xTaskHandle act_task_handle;
 static xQueueHandle act_queue_handle;
-enum activityType{Sleeping, Sedentary, Exercise, NotChanged};//TODO: Maybe better to change to common.h
+typedef enum activityType{Sleeping, Sedentary, Exercise, NotChanged}activityType_t;//TODO: Maybe better to change to common.h
 //stuff for hr monitor task
 static xTaskHandle hrm_task_handle;
 static xQueueHandle hrm_queue_handle;
@@ -173,31 +173,68 @@ void activity_task(void* pvParameters) {
 	task_msg_t message = {};
 	task_msg_t msg = {};
 	const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
+    int sleeping = 0;
+    int sedentary = 10;
+    int exercise = 20;
+    int new = 0;
+    int old = 0;
+    int tensampleold[10];
+	int tensamplenew[10];
+    int enum1 = 1;
+    int enum2 = 2;
+    int enum3=3;
+    int enum4=4;
+	static ppg_sample_t ppg_samples[NUM_PPG_SAMPLES];
+	double hrdata=0;
 
 	while(1){
+        new=0;
+        old=0;
 		message.type = HW_IMU_REQUEST;
 		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);//give me my msg hw
-		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message						
-		switch((int)message.data){
-			case Sleeping:
-				msg.type = APP_ACT_TYPE_UPDATE;
-				memcpy(msg.data, Sleeping, sizeof(int));
-				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
-			case Sedentary:
-				msg.type = APP_ACT_TYPE_UPDATE;
-				memcpy(msg.data, Sedentary, sizeof(int));
-				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
-			case Exercise:
-				msg.type = APP_ACT_TYPE_UPDATE;
-				memcpy(msg.data, Exercise, sizeof(int));
-				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
-		    	case NotChanged:
-				msg.type = APP_ACT_TYPE_UPDATE;
-				memcpy(msg.data, NotChanged, sizeof(int));
-				xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message	
+
+        for(int j = 0; j<10; j++){
+			tensampleold[j] = tensamplenew[j];
+            old=old+tensamplenew[j];
+		}
+		
+		for(int i = 0; i<9; i++){
+		    tensamplenew[i]=tensampleold[i+1];
+            new=new+tensamplenew[i];
+		}
+
+		tensamplenew[9]= (uintptr_t) message.data;
+        new = new + tensamplenew[9];
+        old = old /10;
+        new = new /10;
+
+        if(new!=old){		
+            if(0<new<sleeping){
+                     msg.type = APP_ACT_TYPE_UPDATE;
+                    memcpy(msg.data, &enum1, sizeof(int));
+                    xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+            }
+            else if(sleeping<new<sedentary){
+                     msg.type = APP_ACT_TYPE_UPDATE;
+                    memcpy(msg.data, &enum2, sizeof(int));
+                    xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+            }
+            else{
+                      msg.type = APP_ACT_TYPE_UPDATE;
+                    memcpy(msg.data, &enum3, sizeof(int));
+                    xQueueSend(app_task_handle, &msg, portMAX_DELAY);
+            }
+        }
+        else {
+            msg.type = APP_ACT_TYPE_UPDATE;
+            memcpy(msg.data, &enum4, sizeof(int));
+            xQueueSend(app_task_handle, &msg, portMAX_DELAY);
 		}
 		vTaskDelay(xDelay);
 	}
+    
+
 
 }
 
@@ -226,7 +263,7 @@ void hr_monitor_task(void* pvParameters){
 		tensamplenew[i]=tensampleold[i+1];
 		}
 
-		tensamplenew[9]= (int) message.data;
+		tensamplenew[9]= (uintptr_t) message.data;
 
 		for(int counter = 0; counter<9; counter++){
 		hrdata += tensamplenew[counter+1]-tensamplenew[counter];
