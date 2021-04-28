@@ -17,7 +17,7 @@ void scheduler_task(void* pvParameters){
         switch (message.type) {
             case EDD_TASK_CREATE: 
             // call deadline_insertion
-            deadline_insertion((edd_task_t*)message.data);
+            deadline_insertion((edd_task_t*)message.sender);
             break;
             case EDD_TASK_PERIODIC_DELAY: //sent by periodic task whenever it waits until next period
             // Recalculate deadline based on period (add period to deadline) 
@@ -61,7 +61,7 @@ void scheduler_task(void* pvParameters){
             if(task_priority_queue[i] == NULL){
                 break;
             }
-            vTaskPrioritySet(task_priority_queue[i]->task, BASE_APP_PRIORITY - i);
+            vTaskPrioritySet(*(task_priority_queue[i]->task), BASE_APP_PRIORITY - i);
         }
         // send reply to messenger
         //TODO: I think we can skip reply? 
@@ -126,7 +126,7 @@ void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called
     }
     message.sender = sender;
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
-    vTaskSuspend(sender->task);
+    vTaskSuspend(*sender->task);
 }
 
 void task_resume(edd_task_t* sender){//TODO: should rename since can be called from different task
@@ -139,13 +139,13 @@ void task_resume(edd_task_t* sender){//TODO: should rename since can be called f
     }
     message.sender = sender;
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
-    vTaskResume(sender->task);
+    vTaskResume(*sender->task);
 }
 
 void task_create(edd_task_t* sender, char* name, priority_t priority){
-    xTaskCreate(sender->task_func, name, TASK_STACK_SIZE, NULL, priority, &(sender->task) );
+    xTaskCreate(sender->task_func, name, TASK_STACK_SIZE, NULL, priority, sender->task );
     #ifdef EDD_ENABLED
-    vTaskSuspend(sender->task);
+    vTaskSuspend(*sender->task);
 	// Create message to send to scheduler that a task is created
     task_msg_t message = {};
     message.type = EDD_TASK_CREATE;
@@ -155,7 +155,7 @@ void task_create(edd_task_t* sender, char* name, priority_t priority){
     //wait for message back from scheduler
     //TODO: I think we can skip waiting for reply?
     #endif
-    vTaskResume(sender->task);
+    vTaskResume(*sender->task);
 }
 
 void task_delete(edd_task_t* sender){
@@ -167,7 +167,7 @@ void task_delete(edd_task_t* sender){
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
 	// Wait til scheduler replies
     //TODO: I think we can skip waiting for reply?
-	vTaskDelete ( sender->task );
+	vTaskDelete ( *sender->task );
 }
 
 void monitor_task(void* pvParameters)
