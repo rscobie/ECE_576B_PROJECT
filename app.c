@@ -182,8 +182,8 @@ void activity_task(void* pvParameters) {
 	int tensamplenew[10];
     int enum1 = 1;
     int enum2 = 2;
-    int enum3=3;
-    int enum4=4;
+    int enum3 = 3;
+    int enum4 = 4;
 	static ppg_sample_t ppg_samples[NUM_PPG_SAMPLES];
 	double hrdata=0;
 
@@ -283,10 +283,84 @@ void hr_monitor_task(void* pvParameters){
 void app_task(void* pvParameters) {
     task_msg_t in_message = {};
     task_msg_t out_message = {};
+
+    char reminderStr[60];
+
+    int goal_calories = 1000;
+    int goal_steps = 5000;
+    int goal_movTime = 30*60;
+
+    double hrate = 0;           // Heart rate in beats/min
+    const float weight = 70;    // Weight in kilograms 
+    const int age = 25;
+    float act_time = 0;           // Time in hours
+    int act_time_min = 0;
+    int calories = 0;
+    int act_type = -1;
+    int curr_steps = 0;
+
     while(1){
+        xQueueReceive(app_queue_handle, &in_message, portMAX_DELAY);
         switch(in_message.type){
-            
+            case APP_HEARTRATE:
+                hrate = (uintptr_t) in_message.data;
+                
+                out_message.type = APP_HEARTRATE;
+                memcpy(out_message.data, &hrate, sizeof(hrate));
+                xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
+                break;
+
+            case APP_ACT_TYPE_UPDATE:
+                act_type = (uintptr_t) in_message.data;
+
+                if(act_type >= 3){
+                    act_time_min++;
+                    curr_steps += 10;
+                }
+                
+                act_time = act_time_min / 60;
+
+                // Suppose person wearing device is a man
+                calories = ((-55.0969 + 0.6309*hrate + 0.1988*weight
+                            + 0.2017*age)/4.184) * 60 * act_time;
+
+                // Suppose person wearing device is a woman
+                /*calories = ((-20.4022 + 0.4472*hrate - 0.1263*weight
+                            + 0.074*age)/4.184) * 60 * act_time;*/
+                break;
         }
+
+        // Reminders
+        out_message.type = APP_REMINDER;
+        if(curr_steps >= goal_steps){
+            strcpy(reminderStr, "You did it! Goal steps completed!");
+            memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
+        }
+        else{
+            strcpy(reminderStr, "Let's complete those steps!");
+            memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
+        }
+        xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
+
+        if(act_time_min >= goal_movTime){
+            strcpy(reminderStr, "Way to go! Goal movement time completed!");
+            memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
+        }
+        else{
+            strcpy(reminderStr, "Hey there! Let's stand up for a bit.");
+            memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
+        }
+        xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
+
+        if(calories >= goal_calories){
+            strcpy(reminderStr, "Hurray! You are the best! Goal calories completed!");
+            memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
+        }
+        else{
+            strcpy(reminderStr, "Let's try and do some quick exercises!");
+            memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
+        }
+        xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
     }
 }
 
