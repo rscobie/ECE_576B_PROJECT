@@ -90,13 +90,13 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
     //send first hardware event
     hw_timer_callback(NULL);
     while (1) {
-        printf("hardware task\n");
+        //printf("hardware task\n");
         xQueueReceive(hw_queue_handle, &message, portMAX_DELAY); //wait for message
 
         switch (message.type) {
         case HW_NEXT_EVENT:
         {//adds local scoping to switch statement
-            printf("hardware task next event\n");
+            //printf("hardware task next event\n");
             hw_evt_t next_event = events[curr_evt];
             curr_evt++;
             if (curr_evt >= NUM_EVENTS) {
@@ -128,26 +128,26 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
         case HW_IMU_REQUEST:
             //send message to Activity Task, data is vector of acceleration magnitudes
         {
-            printf("hardware task imu request\n");
+            //printf("hardware task imu request\n");
             //send message to UI Task
             task_msg_t msg = {};
             msg.type = ACT_IMU_DATA;
             //imu_samples[curr_imu] = 40;
             memcpy(msg.data, &imu_samples[curr_imu], sizeof(imu_sample_t));
-            printf("%d\n", imu_samples[curr_imu]);
+            //printf("%d\n", imu_samples[curr_imu]);
             curr_imu++;
             if (curr_imu >= NUM_IMU_SAMPLES) {
                 curr_imu = 0;
             }
-            printf("%d\n", imu_samples[curr_imu]);
+            //printf("%d\n", imu_samples[curr_imu]);
             xQueueSend(act_queue_handle, &msg, portMAX_DELAY);
-            printf("message sent\n");
+            //printf("message sent\n");
         }
         break;
         case HW_PPG_REQUEST:
             //send message to HR Monitor Task, data is vector of timestamps indicating the peaks in the waveform
         {
-            printf("hardware task ppg request\n");
+            //printf("hardware task ppg request\n");
             task_msg_t msg = {};
             msg.type = HRM_PPG_DATA;
             memcpy(msg.data, &ppg_samples[curr_ppg], sizeof(ppg_sample_t));
@@ -159,7 +159,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
         }
         break;
         case HW_SCREEN_UPDATE:
-            printf("hardware task screen update\n");
+            //printf("hardware task screen update\n");
             //print “screen” to console. “Screen” is just a string sent in the data field of this task
             printf("%s", (char*)message.data);
             break;
@@ -169,7 +169,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
 
 void generator_task(void* pvParameters) {
     while (1) {
-        printf("generator task\n");
+        //printf("generator task\n");
         // Add each of the tasks to list using task_create 
         task_create(&act_task_data, "activity", BASE_APP_PRIORITY);
         task_create(&ui_task_data, "ui", BASE_APP_PRIORITY);
@@ -198,42 +198,42 @@ void activity_task(void* pvParameters) {
 	double hrdata=0;
 
 	while(1){
-        printf("activity task\n");
+        //printf("activity task\n");
         new=0;
         old=0;
 		message.type = HW_IMU_REQUEST;
 		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);//give me my msg hw
 		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message	
-        printf("message received\n");
+        //printf("message received\n");
 
         for(int j = 0; j<10; j++){
 			tensampleold[j] = tensamplenew[j];
             old+=tensamplenew[j];
-            printf("sample old: %d - sample new: %d - old: %d\n");
+            //printf("sample old: %d - sample new: %d - old: %d\n");
 		}
-        printf("first for\n");
+        //printf("first for\n");
 		
 		for(int i = 0; i<9; i++){
 		    tensamplenew[i]=tensampleold[i+1];
             new+=tensamplenew[i];
 		}
-        printf("second for\n");
+        //printf("second for\n");
         int test = 0;
-        printf("test %d\n", test);
+        //printf("test %d\n", test);
         memcpy(&test, &message.data, sizeof(int));
-        printf("test %d\n", test);
+        //printf("test %d\n", test);
 		//tensamplenew[9]= (uintptr_t) message.data;
         //printf("%s\n", message.data);
         memcpy(&tensamplenew[9], &message.data, sizeof(int));
-        printf("%d\n", tensamplenew[9]);
+        //printf("%d\n", tensamplenew[9]);
         new = new + tensamplenew[9];
-        printf("%d\n", new);
+        //printf("%d\n", new);
         old = old /10;
         new = new /10;
-        printf("before first if\n");
+        //printf("before first if\n");
         if(new!=old){		
             if(new<sleeping){
-                printf("if new<sleeping\n");
+                //printf("if new<sleeping\n");
                      msg.type = APP_ACT_TYPE_UPDATE;
                     memcpy(msg.data, &enum1, sizeof(int));
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
@@ -250,15 +250,16 @@ void activity_task(void* pvParameters) {
             }
         }
         else {
-            printf("else\n");
+            //printf("else\n");
             msg.type = APP_ACT_TYPE_UPDATE;
             memcpy(msg.data, &enum4, sizeof(int));
-            printf("copied %d\n", enum4);
-            if(xQueueSend(app_queue_handle, &msg, portMAX_DELAY) != pdPASS){
+            //printf("copied %d\n", enum4);
+            xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
+            /*if(xQueueSend(app_queue_handle, &msg, portMAX_DELAY) != pdPASS){
                 printf("not sent!\n");
                 return 0;
-            }
-            printf("message sent\n");
+            }*/
+            //printf("message sent\n");
 		}
 		vTaskDelay(xDelay);
 	}
