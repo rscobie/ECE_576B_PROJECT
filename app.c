@@ -280,7 +280,7 @@ void hr_monitor_task(void* pvParameters){
 	const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
 
 	while(1){
-		printf("hear rate task\n");
+		//printf("hear rate task\n");
 		message.type=HRM_PPG_DATA;
 
 		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);
@@ -330,7 +330,7 @@ void app_task(void* pvParameters) {
     int curr_steps = 0;
 
     while(1){
-        printf("app task\n");
+        //printf("app task\n");
         xQueueReceive(app_queue_handle, &in_message, portMAX_DELAY);
         switch(in_message.type){
             case APP_HEARTRATE:
@@ -401,7 +401,7 @@ void ui_task(void* pvParameters) {
     char messageStr[30]; 
 
     while (1) {
-        printf("ui task\n");
+        //printf("ui task\n");
         xQueueReceive(ui_queue_handle, &message, portMAX_DELAY); //wait for message
 
         switch (message.type) {
