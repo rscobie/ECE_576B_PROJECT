@@ -364,31 +364,31 @@ void app_task(void* pvParameters) {
         // Reminders
         out_message.type = APP_REMINDER;
         if(curr_steps >= goal_steps){
-            strcpy(reminderStr, "You did it! Goal steps completed!");
+            strcpy(reminderStr, "You did it! Goal steps completed!\n");
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         else{
-            strcpy(reminderStr, "Let's complete those steps!");
+            strcpy(reminderStr, "Let's complete those steps!\n");
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
 
         if(act_time_min >= goal_movTime){
-            strcpy(reminderStr, "Way to go! Goal movement time completed!");
+            strcpy(reminderStr, "Way to go! Goal movement time completed!\n");
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         else{
-            strcpy(reminderStr, "Hey there! Let's stand up for a bit.");
+            strcpy(reminderStr, "Hey there! Let's stand up for a bit.\n");
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
 
         if(calories >= goal_calories){
-            strcpy(reminderStr, "Hurray! You are the best! Goal calories completed!");
+            strcpy(reminderStr, "Hurray! You are the best! Goal calories completed!\n");
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         else{
-            strcpy(reminderStr, "Let's try and do some quick exercises!");
+            strcpy(reminderStr, "Let's try and do some quick exercises!\n");
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
