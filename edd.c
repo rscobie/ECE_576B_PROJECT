@@ -13,54 +13,64 @@ void init_scheduler(){
 void scheduler_task(void* pvParameters){
     task_msg_t message = {};
     while(1){
+        printf("scheduler task\n");
         xQueueReceive(scheduler_queue_handle, &message, portMAX_DELAY); //Yield until message
+        //printf("%s\n", message.data);
         switch (message.type) {
             case EDD_TASK_CREATE: 
-            // call deadline_insertion
-            deadline_insertion((edd_task_t*)message.sender);
-            break;
+                printf("task create\n");
+                // call deadline_insertion
+                deadline_insertion((edd_task_t*)message.sender);
+                break;
             case EDD_TASK_PERIODIC_DELAY: //sent by periodic task whenever it waits until next period
-            // Recalculate deadline based on period (add period to deadline) 
-            message.sender->deadline += message.sender->period;
-            // Update task_priority_queue => call deadline_update
-            deadline_removal((edd_task_t*)message.sender);
-            deadline_insertion((edd_task_t*)message.sender); 
-            // Resume sender task 
-            break;
+                printf("task periodic delay\n");
+                // Recalculate deadline based on period (add period to deadline) 
+                message.sender->deadline += message.sender->period;
+                // Update task_priority_queue => call deadline_update
+                deadline_removal((edd_task_t*)message.sender);
+                deadline_insertion((edd_task_t*)message.sender); 
+                // Resume sender task 
+                break;
             case EDD_TASK_PERIODIC_SUSPEND://send by application task (e.g. disable HRM)
-            // Suspend desired task (handle included in message)
-            deadline_removal((edd_task_t*)message.sender);//TODO: rename since not actually sender
-            // Remove desired task from priority queue
-            break;
+                printf("task periodic suspend\n");
+                // Suspend desired task (handle included in message)
+                deadline_removal((edd_task_t*)message.sender);//TODO: rename since not actually sender
+                // Remove desired task from priority queue
+                break;
             case EDD_TASK_APERIODIC_SUSPEND://sent from aperiodic task
-            // Suspend sender task
-            deadline_removal((edd_task_t*)message.sender);//TODO: rename since not actually sender
-            // Remove sender task from priority queue
-            break;
+                printf("task aperiodic suspend\n");
+                // Suspend sender task
+                deadline_removal((edd_task_t*)message.sender);//TODO: rename since not actually sender
+                // Remove sender task from priority queue
+                break;
             case EDD_TASK_PERIODIC_RESUME://sent by application task
-            // Assign deadline based on period
-            message.sender->deadline = xTaskGetTickCount() + message.sender->period;
-            // Add desired task to priority queue
-            deadline_insertion((edd_task_t*)message.sender);//TODO: rename since not actually sender
-            // Resume desired task
-            break;
+                printf("task periodic resume\n");
+                // Assign deadline based on period
+                message.sender->deadline = xTaskGetTickCount() + message.sender->period;
+                // Add desired task to priority queue
+                deadline_insertion((edd_task_t*)message.sender);//TODO: rename since not actually sender
+                // Resume desired task
+                break;
             case EDD_TASK_APERIODIC_RESUME://sent by hardware task
-            // Assign deadline based on period
-            message.sender->deadline = xTaskGetTickCount() + message.sender->relative_deadline;
-            // Add desired task to priority queue
-            deadline_insertion((edd_task_t*)message.sender);//TODO: rename since not actually sender
-            // Resume desired task
-            break;
+                printf("task aperiodic resume\n");
+                // Assign deadline based on period
+                message.sender->deadline = xTaskGetTickCount() + message.sender->relative_deadline;
+                // Add desired task to priority queue
+                deadline_insertion((edd_task_t*)message.sender);//TODO: rename since not actually sender
+                // Resume desired task
+                break;
             case EDD_TASK_DELETE:
-            // call deadline_removal //probably won’t need
-            deadline_removal((edd_task_t*)message.data);
-            break;
+                printf("task delete delay\n");
+                // call deadline_removal //probably won’t need
+                deadline_removal((edd_task_t*)message.data);
+                break;
         }
         //update priorities here
         for(int i = 0; i < NUM_APP_TASKS; ++i){
             if(task_priority_queue[i] == NULL){
                 break;
             }
+            printf("updating priorities\n");
             vTaskPrioritySet(*(task_priority_queue[i]->task), BASE_APP_PRIORITY - i);
         }
         // send reply to messenger
@@ -143,6 +153,7 @@ void task_resume(edd_task_t* sender){//TODO: should rename since can be called f
 }
 
 void task_create(edd_task_t* sender, char* name, priority_t priority){
+    printf("%s\n", name);
     xTaskCreate(sender->task_func, name, TASK_STACK_SIZE, NULL, priority, sender->task );
     #ifdef EDD_ENABLED
     vTaskSuspend(*sender->task);
@@ -177,6 +188,7 @@ void monitor_task(void* pvParameters)
 
     for (;;)
     {
+        printf("monitor task\n");
         current_time = xTaskGetTickCount();
 
         if (current_time < MAX_TIME)
