@@ -11,6 +11,7 @@ static imu_sample_t imu_samples[NUM_IMU_SAMPLES];
 static int curr_ppg = 0;
 static int curr_imu = 0;
 static int curr_evt = 0;
+static TimerHandle_t hw_timer;
 
 //stuff for activity task
 static xTaskHandle act_task_handle;
@@ -36,6 +37,7 @@ void init_app() {
         else {
             events[i].event_type = HW_EVT_SHORT_PRESS;
         }
+        events[i].time_stamp = i*870; //choose weird number
     }
 
     for (int i = 0; i < NUM_PPG_SAMPLES; ++i) {
@@ -81,6 +83,11 @@ void hw_timer_callback(TimerHandle_t xTimer) {
     //Send NEXT_EVENT message to hardware task
     task_msg_t msg = {};
     msg.type = HW_NEXT_EVENT;
+    
+
+    xTimerStop(hw_timer, portMAX_DELAY);
+    xTimerDelete(hw_timer, portMAX_DELAY);
+
     xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
 }
 
@@ -88,7 +95,9 @@ void hw_timer_callback(TimerHandle_t xTimer) {
 void hardware_task(void* pvParameters) { //this should have higher priority than rest, but lower priority than scheduler
     task_msg_t message = {};
     //send first hardware event
-    hw_timer_callback(NULL);
+    task_msg_t temp_msg = {};
+    temp_msg.type = HW_NEXT_EVENT;
+    xQueueSend(hw_queue_handle, &temp_msg, portMAX_DELAY);
     while (1) {
         //printf("hardware task\n");
         xQueueReceive(hw_queue_handle, &message, portMAX_DELAY); //wait for message
@@ -102,8 +111,12 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
             if (curr_evt >= NUM_EVENTS) {
                 curr_evt = 0; //loop around to beginning
             }
-            TimerHandle_t timer = xTimerCreate("hw_evt_timer", next_event.time_stamp - xTaskGetTickCount(), pdFALSE, (void*)HW_EVT_TIMER, hw_timer_callback); //TODO: make sure this isn't negative, and that void* cast is OK
-            xTimerStart(timer, 0);//TODO: need to delete this timer later
+            int wait_time = next_event.time_stamp - xTaskGetTickCount();
+            if(wait_time < 0){
+                wait_time = 0;
+            }
+            hw_timer = xTimerCreate("hw_evt_timer", wait_time, pdFALSE, (void*)HW_EVT_TIMER, hw_timer_callback); //TODO: make sure this isn't negative, and that void* cast is OK
+            xTimerStart(hw_timer, portMAX_DELAY);//TODO: need to delete this timer later
 
             switch (next_event.event_type) {
             case HW_EVT_SHORT_PRESS:
@@ -427,14 +440,14 @@ void ui_task(void* pvParameters) {
             // hardware events 
         case UI_SHORT_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
-            strcpy(messageStr, "Screen toggle on/off"); 
+            strcpy(messageStr, "Screen toggle on/off\n"); 
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
 
         case UI_LONG_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
-            strcpy(messageStr, "Device shut off"); 
+            strcpy(messageStr, "Device shut off\n"); 
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
