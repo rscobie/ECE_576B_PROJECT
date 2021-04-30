@@ -220,11 +220,11 @@ void activity_task(void* pvParameters) {
         //printf("second for\n");
         int test = 0;
         //printf("test %d\n", test);
-        memcpy(&test, &message.data, sizeof(int));
+        memcpy(&test, message.data, sizeof(imu_sample_t));
         //printf("test %d\n", test);
 		//tensamplenew[9]= (uintptr_t) message.data;
         //printf("%s\n", message.data);
-        memcpy(&tensamplenew[9], &message.data, sizeof(int));
+        memcpy(&tensamplenew[9], message.data, sizeof(imu_sample_t));
         //printf("%d\n", tensamplenew[9]);
         new = new + tensamplenew[9];
         //printf("%d\n", new);
@@ -293,7 +293,7 @@ void hr_monitor_task(void* pvParameters){
 		tensamplenew[i]=tensampleold[i+1];
 		}
 
-		tensamplenew[9]= (uintptr_t) message.data;
+		memcpy(&tensamplenew[9],message.data,sizeof(imu_sample_t));
 
 		for(int counter = 0; counter<9; counter++){
 		hrdata += tensamplenew[counter+1]-tensamplenew[counter];
