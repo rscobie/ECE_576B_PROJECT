@@ -119,14 +119,17 @@ void deadline_removal(edd_task_t* sender ){
 }
 
 void task_delay(edd_task_t* sender){
+    #ifdef EDD_ENABLED
     task_msg_t message = {};
     message.type = EDD_TASK_PERIODIC_DELAY;
     message.sender = sender;
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
+    #endif
     vTaskDelay(sender->period);
 }
 
 void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called from different task
+    #ifdef EDD_ENABLED
     task_msg_t message = {};
     if(sender->periodic){
         message.type = EDD_TASK_PERIODIC_SUSPEND;
@@ -136,10 +139,12 @@ void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called
     }
     message.sender = sender;
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
+    #endif
     vTaskSuspend(*sender->task);
 }
 
 void task_resume(edd_task_t* sender){//TODO: should rename since can be called from different task
+    #ifdef EDD_ENABLED
     task_msg_t message = {};
     if(sender->periodic){
         message.type = EDD_TASK_PERIODIC_RESUME;
@@ -149,10 +154,12 @@ void task_resume(edd_task_t* sender){//TODO: should rename since can be called f
     }
     message.sender = sender;
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
+    #endif
     vTaskResume(*sender->task);
 }
 
 void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be called from different task
+    #ifdef EDD_ENABLED
     task_msg_t message = {};
     if(sender->periodic){
         message.type = EDD_TASK_PERIODIC_SUSPEND;
@@ -162,9 +169,11 @@ void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be c
     }
     message.sender = sender;
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
+    #endif
 }
 
 void task_got_evt(edd_task_t* sender){//TODO: should rename since can be called from different task
+    #ifdef EDD_ENABLED
     task_msg_t message = {};
     if(sender->periodic){
         message.type = EDD_TASK_PERIODIC_RESUME;
@@ -174,6 +183,7 @@ void task_got_evt(edd_task_t* sender){//TODO: should rename since can be called 
     }
     message.sender = sender;
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
+    #endif
 }
 
 void task_create(edd_task_t* sender, char* name, priority_t priority){
@@ -194,6 +204,7 @@ void task_create(edd_task_t* sender, char* name, priority_t priority){
 }
 
 void task_delete(edd_task_t* sender){
+    #ifdef EDD_ENABLED
 	// Create message to scheduler that a task handler will be deleted
 	task_msg_t message = {};
     message.type = EDD_TASK_DELETE;
@@ -202,6 +213,7 @@ void task_delete(edd_task_t* sender){
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
 	// Wait til scheduler replies
     //TODO: I think we can skip waiting for reply?
+    #endif
 	vTaskDelete ( *sender->task );
 }
 
