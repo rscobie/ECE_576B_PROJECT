@@ -317,7 +317,7 @@ void app_task(void* pvParameters) {
     char reminderStr[60];
 
     int goal_calories = 1000;
-    int goal_steps = 5000;
+    int goal_steps = 100;
     int goal_movTime = 30*60;
 
     double hrate = 0;           // Heart rate in beats/min
@@ -368,7 +368,13 @@ void app_task(void* pvParameters) {
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         else{
-            strcpy(reminderStr, "Let's complete those steps!\n");
+            char reminder[] = "Let's complete those steps! Current steps: ";
+            char c[10];
+            sprintf(c, "%i", curr_steps);
+            strncat(reminder, &c, sizeof(int));
+            strncat(reminder, "\n", sizeof(int));
+            
+            strcpy(reminderStr, &reminder);
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
@@ -378,7 +384,13 @@ void app_task(void* pvParameters) {
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         else{
-            strcpy(reminderStr, "Hey there! Let's stand up for a bit.\n");
+            char reminder[] = "Hey there! Let's stand up for a bit. Current movement time: ";
+            char c[10];
+            sprintf(c, "%i", act_time_min);
+            strncat(reminder, &c, sizeof(int));
+            strncat(reminder, "\n", sizeof(int));
+            
+            strcpy(reminderStr, &reminder);
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
@@ -388,7 +400,13 @@ void app_task(void* pvParameters) {
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         else{
-            strcpy(reminderStr, "Let's try and do some quick exercises!\n");
+            char reminder[] = "Let's try and do some quick exercises! Current calories: ";
+            char c[10];
+            sprintf(c, "%i", calories);
+            strncat(reminder, &c, sizeof(int));
+            strncat(reminder, "\n", sizeof(int));
+
+            strcpy(reminderStr, &reminder);
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
