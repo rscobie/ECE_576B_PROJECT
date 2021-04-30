@@ -142,6 +142,19 @@ void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called
 void task_resume(edd_task_t* sender){//TODO: should rename since can be called from different task
     task_msg_t message = {};
     if(sender->periodic){
+        message.type = EDD_TASK_PERIODIC_RESUME;
+    }
+    else{
+        message.type = EDD_TASK_APERIODIC_RESUME;
+    }
+    message.sender = sender;
+    xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
+    vTaskResume(*sender->task);
+}
+
+void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be called from different task
+    task_msg_t message = {};
+    if(sender->periodic){
         message.type = EDD_TASK_PERIODIC_SUSPEND;
     }
     else{
@@ -149,7 +162,18 @@ void task_resume(edd_task_t* sender){//TODO: should rename since can be called f
     }
     message.sender = sender;
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
-    vTaskResume(*sender->task);
+}
+
+void task_got_evt(edd_task_t* sender){//TODO: should rename since can be called from different task
+    task_msg_t message = {};
+    if(sender->periodic){
+        message.type = EDD_TASK_PERIODIC_RESUME;
+    }
+    else{
+        message.type = EDD_TASK_APERIODIC_RESUME;
+    }
+    message.sender = sender;
+    xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
 }
 
 void task_create(edd_task_t* sender, char* name, priority_t priority){

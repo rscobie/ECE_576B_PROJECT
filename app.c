@@ -261,7 +261,7 @@ void activity_task(void* pvParameters) {
             }*/
             //printf("message sent\n");
 		}
-		vTaskDelay(xDelay);
+		task_delay(&act_task_data);
 	}
     
 
@@ -304,7 +304,7 @@ void hr_monitor_task(void* pvParameters){
 		memcpy(msg.data, &hrdata, sizeof(hrdata));
 		
 		xQueueSend(app_queue_handle, &msg, portMAX_DELAY);	
-		vTaskDelay(xDelay);
+		task_delay(&hrm_task_data);
 		
 	}
 

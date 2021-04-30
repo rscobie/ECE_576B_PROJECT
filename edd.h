@@ -20,5 +20,7 @@ void deadline_insertion(edd_task_t* sender); //resume task
 void deadline_removal(edd_task_t* sender); //suspend task
 void scheduler_task(void* pvParameters);
 void monitor_task(void* pvParameters);
+void task_wait_for_evt(edd_task_t* sender);
+void task_got_evt(edd_task_t* sender);
 
 #endif
