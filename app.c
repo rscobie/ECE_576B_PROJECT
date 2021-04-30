@@ -427,14 +427,14 @@ void ui_task(void* pvParameters) {
             // hardware events 
         case UI_SHORT_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
-            strcpy(messageStr, "Screen toggle on/off"); 
+            strcpy(messageStr, "Screen toggle on/off\n"); 
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
 
         case UI_LONG_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
-            strcpy(messageStr, "Device shut off"); 
+            strcpy(messageStr, "Device shut off\n"); 
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
