@@ -28,18 +28,7 @@ void scheduler_task(void* pvParameters){
                 break;
             case EDD_TASK_PERIODIC_DELAY: //sent by periodic task whenever it waits until next period
                 //printf("task periodic delay\n");
-                lateness = xTaskGetTickCount() - message.sender->deadline;
-                if(lateness > max_lateness){
-                    printf("new max lateness: %d\n", lateness);
-                    max_lateness = lateness;
-                }
-                // Recalculate deadline based on period (add period to deadline)
-                if(lateness <= 0){
-                    message.sender->deadline += message.sender->period;
-                }
-                else{ //if we missed deadline, add to current time
-                    message.sender->deadline = xTaskGetTickCount() + message.sender->period;
-                }
+                
                 // Update task_priority_queue => call deadline_update
                 deadline_removal((edd_task_t*)message.sender);
                 deadline_insertion((edd_task_t*)message.sender); 
@@ -47,22 +36,14 @@ void scheduler_task(void* pvParameters){
                 break;
             case EDD_TASK_PERIODIC_SUSPEND://send by application task (e.g. disable HRM)
                 //printf("task periodic suspend\n");
-                lateness = xTaskGetTickCount() - message.sender->deadline;
-                if(lateness > max_lateness){
-                    printf("new max lateness: %d\n", lateness);
-                    max_lateness = lateness;
-                }
+                
                 // Suspend desired task (handle included in message)
                 deadline_removal((edd_task_t*)message.sender);//TODO: rename since not actually sender
                 // Remove desired task from priority queue
                 break;
             case EDD_TASK_APERIODIC_SUSPEND://sent from aperiodic task
                 //printf("task aperiodic suspend\n");
-                lateness = xTaskGetTickCount() - message.sender->deadline;
-                if(lateness > max_lateness){
-                    printf("new max lateness: %d\n", lateness);
-                    max_lateness = lateness;
-                }
+                
                 // Suspend sender task
                 deadline_removal((edd_task_t*)message.sender);//TODO: rename since not actually sender
                 // Remove sender task from priority queue
@@ -70,7 +51,7 @@ void scheduler_task(void* pvParameters){
             case EDD_TASK_PERIODIC_RESUME://sent by application task
                 //printf("task periodic resume\n");
                 // Assign deadline based on period
-                message.sender->deadline = xTaskGetTickCount() + message.sender->period;
+                
                 // Add desired task to priority queue
                 deadline_insertion((edd_task_t*)message.sender);//TODO: rename since not actually sender
                 // Resume desired task
@@ -78,7 +59,7 @@ void scheduler_task(void* pvParameters){
             case EDD_TASK_APERIODIC_RESUME://sent by hardware task
                 //printf("task aperiodic resume\n");
                 // Assign deadline based on period
-                message.sender->deadline = xTaskGetTickCount() + message.sender->relative_deadline;
+                
                 // Add desired task to priority queue
                 deadline_insertion((edd_task_t*)message.sender);//TODO: rename since not actually sender
                 // Resume desired task
@@ -143,6 +124,18 @@ void deadline_removal(edd_task_t* sender ){
 }
 
 void task_delay(edd_task_t* sender){
+    time_t lateness = xTaskGetTickCount() - sender->deadline;
+    if(lateness > max_lateness){
+        printf("new max lateness: %d\n", lateness);
+        max_lateness = lateness;
+    }
+    // Recalculate deadline based on period (add period to deadline)
+    if(lateness <= 0){
+        sender->deadline += sender->period;
+    }
+    else{ //if we missed deadline, add to current time
+        sender->deadline = xTaskGetTickCount() + sender->period;
+    }
     #ifdef EDD_ENABLED
     task_msg_t message = {};
     message.type = EDD_TASK_PERIODIC_DELAY;
@@ -153,6 +146,12 @@ void task_delay(edd_task_t* sender){
 }
 
 void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called from different task
+    time_t lateness = INT_MIN;
+    lateness = xTaskGetTickCount() - sender->deadline;
+    if(lateness > max_lateness){
+        printf("new max lateness: %d\n", lateness);
+        max_lateness = lateness;
+    }
     #ifdef EDD_ENABLED
     task_msg_t message = {};
     if(sender->periodic){
@@ -168,6 +167,12 @@ void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called
 }
 
 void task_resume(edd_task_t* sender){//TODO: should rename since can be called from different task
+    if(sender->periodic){
+        sender->deadline = xTaskGetTickCount() + sender->period;
+    }
+    else{
+        sender->deadline = xTaskGetTickCount() + sender->relative_deadline;
+    }
     #ifdef EDD_ENABLED
     task_msg_t message = {};
     if(sender->periodic){
@@ -183,6 +188,12 @@ void task_resume(edd_task_t* sender){//TODO: should rename since can be called f
 }
 
 void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be called from different task
+    time_t lateness = INT_MIN;
+    lateness = xTaskGetTickCount() - sender->deadline;
+    if(lateness > max_lateness){
+        printf("new max lateness: %d\n", lateness);
+        max_lateness = lateness;
+    }
     #ifdef EDD_ENABLED
     task_msg_t message = {};
     if(sender->periodic){
@@ -197,6 +208,12 @@ void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be c
 }
 
 void task_got_evt(edd_task_t* sender){//TODO: should rename since can be called from different task
+    if(sender->periodic){
+        sender->deadline = xTaskGetTickCount() + sender->period;
+    }
+    else{
+        sender->deadline = xTaskGetTickCount() + sender->relative_deadline;
+    }
     #ifdef EDD_ENABLED
     task_msg_t message = {};
     if(sender->periodic){
