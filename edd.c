@@ -124,10 +124,17 @@ void deadline_removal(edd_task_t* sender ){
 }
 
 void task_delay(edd_task_t* sender){
-    time_t lateness = xTaskGetTickCount() - sender->deadline;
-    if(lateness > max_lateness){
-        printf("new max lateness: %d\n", lateness);
-        max_lateness = lateness;
+    time_t lateness = INT_MIN;
+    if(sender->first_time){
+        sender->first_time = false;
+        lateness = 1;//just to get use to add period to the current time, doesn't effect max lateness
+    }
+    else{
+        lateness = xTaskGetTickCount() - sender->deadline;
+        if(lateness > max_lateness){
+            printf("new max lateness: %d\n", lateness);
+            max_lateness = lateness;
+        }
     }
     // Recalculate deadline based on period (add period to deadline)
     if(lateness <= 0){
@@ -189,10 +196,15 @@ void task_resume(edd_task_t* sender){//TODO: should rename since can be called f
 
 void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be called from different task
     time_t lateness = INT_MIN;
-    lateness = xTaskGetTickCount() - sender->deadline;
-    if(lateness > max_lateness){
-        printf("new max lateness: %d\n", lateness);
-        max_lateness = lateness;
+    if(sender->first_time){
+        sender->first_time = false;
+    }
+    else{
+        lateness = xTaskGetTickCount() - sender->deadline;
+        if(lateness > max_lateness){
+            printf("new max lateness: %d\n", lateness);
+            max_lateness = lateness;
+        }
     }
     #ifdef EDD_ENABLED
     task_msg_t message = {};

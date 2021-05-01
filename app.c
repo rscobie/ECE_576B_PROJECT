@@ -60,6 +60,7 @@ void init_app() {
     act_task_data.relative_deadline = ACT_TASK_RELATIVE_DEADLINE;
     act_task_data.task_func = activity_task;
     act_task_data.task = &act_task_handle;
+    act_task_data.first_time = true;
 
     hrm_task_data.deadline = HRM_TASK_PERIOD;
     hrm_task_data.periodic = true;
@@ -67,18 +68,21 @@ void init_app() {
     hrm_task_data.relative_deadline = HRM_TASK_RELATIVE_DEADLINE;
     hrm_task_data.task_func = hr_monitor_task;
     hrm_task_data.task = &hrm_task_handle;
+    hrm_task_data.first_time = true;
 
     app_task_data.deadline = 0;
     app_task_data.periodic = false;
     app_task_data.relative_deadline = APP_TASK_RELATIVE_DEADLINE;
     app_task_data.task_func = app_task;
     app_task_data.task = &app_task_handle;
+    app_task_data.first_time = true;
 
     ui_task_data.deadline = 0;
     ui_task_data.periodic = false;
     ui_task_data.relative_deadline = UI_TASK_RELATIVE_DEADLINE;
     ui_task_data.task_func = ui_task;
     ui_task_data.task = &ui_task_handle;
+    ui_task_data.first_time = true;
 }
 
 void hw_timer_callback(TimerHandle_t xTimer) {
@@ -346,7 +350,9 @@ void app_task(void* pvParameters) {
 
     while(1){
         //printf("app task\n");
+        task_wait_for_evt(&app_task_data);
         xQueueReceive(app_queue_handle, &in_message, portMAX_DELAY);
+        task_got_evt(&app_task_data);
         switch(in_message.type){
             case APP_HEARTRATE:
                 hrate = (uintptr_t) in_message.data;
@@ -435,7 +441,9 @@ void ui_task(void* pvParameters) {
 
     while (1) {
         //printf("ui task\n");
+        task_wait_for_evt(&ui_task_data);
         xQueueReceive(ui_queue_handle, &message, portMAX_DELAY); //wait for message
+        task_got_evt(&ui_task_data);
 
         switch (message.type) {
 
