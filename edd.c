@@ -140,7 +140,7 @@ void task_delay(edd_task_t* sender){
     if(lateness <= 0){
         sender->deadline += sender->period;
     }
-    else{ //if we missed deadline, add to current time
+    else{ //if we missed deadline, add to current time //TODO: is this OK to do?
         sender->deadline = xTaskGetTickCount() + sender->period;
     }
     #ifdef EDD_ENABLED
@@ -149,7 +149,12 @@ void task_delay(edd_task_t* sender){
     message.sender = sender;
     xQueueSend(scheduler_queue_handle, &message, portMAX_DELAY);
     #endif
-    vTaskDelay(sender->period);
+    if(lateness <= 0){//wait for the rest of the period (until old deadline)
+        vTaskDelay(-1*lateness);
+    }
+    else{//since we were late, go again immediately
+        //intentionally left empty
+    }
 }
 
 void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called from different task
