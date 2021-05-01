@@ -54,13 +54,13 @@ void init_app() {
     app_queue_handle = xQueueCreate(10, sizeof(task_msg_t));
     ui_queue_handle = xQueueCreate(10, sizeof(task_msg_t));
 
-    act_task_data.deadline = 0;
+    act_task_data.deadline = ACT_TASK_PERIOD;
     act_task_data.periodic = true;
     act_task_data.period = ACT_TASK_PERIOD;
     act_task_data.task_func = activity_task;
     act_task_data.task = &act_task_handle;
 
-    hrm_task_data.deadline = 0;
+    hrm_task_data.deadline = HRM_TASK_PERIOD;
     hrm_task_data.periodic = true;
     hrm_task_data.period - HRM_TASK_PERIOD;
     hrm_task_data.task_func = hr_monitor_task;

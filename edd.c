@@ -1,4 +1,7 @@
 #include "edd.h"
+#include <limits.h>
+
+static int max_lateness = INT_MIN;
 
 static edd_task_t* task_priority_queue[NUM_APP_TASKS];
 
@@ -12,6 +15,7 @@ void init_scheduler(){
 
 void scheduler_task(void* pvParameters){
     task_msg_t message = {};
+    time_t lateness = INT_MIN;
     while(1){
         //printf("scheduler task\n");
         xQueueReceive(scheduler_queue_handle, &message, portMAX_DELAY); //Yield until message
@@ -24,8 +28,18 @@ void scheduler_task(void* pvParameters){
                 break;
             case EDD_TASK_PERIODIC_DELAY: //sent by periodic task whenever it waits until next period
                 //printf("task periodic delay\n");
-                // Recalculate deadline based on period (add period to deadline) 
-                message.sender->deadline += message.sender->period;
+                lateness = xTaskGetTickCount() - message.sender->deadline;
+                if(lateness > max_lateness){
+                    printf("new max lateness: %d\n", lateness);
+                    max_lateness = lateness;
+                }
+                // Recalculate deadline based on period (add period to deadline)
+                if(lateness <= 0){
+                    message.sender->deadline += message.sender->period;
+                }
+                else{ //if we missed deadline, add to current time
+                    message.sender->deadline = xTaskGetTickCount() + message.sender->period;
+                }
                 // Update task_priority_queue => call deadline_update
                 deadline_removal((edd_task_t*)message.sender);
                 deadline_insertion((edd_task_t*)message.sender); 
@@ -33,12 +47,22 @@ void scheduler_task(void* pvParameters){
                 break;
             case EDD_TASK_PERIODIC_SUSPEND://send by application task (e.g. disable HRM)
                 //printf("task periodic suspend\n");
+                lateness = xTaskGetTickCount() - message.sender->deadline;
+                if(lateness > max_lateness){
+                    printf("new max lateness: %d\n", lateness);
+                    max_lateness = lateness;
+                }
                 // Suspend desired task (handle included in message)
                 deadline_removal((edd_task_t*)message.sender);//TODO: rename since not actually sender
                 // Remove desired task from priority queue
                 break;
             case EDD_TASK_APERIODIC_SUSPEND://sent from aperiodic task
                 //printf("task aperiodic suspend\n");
+                lateness = xTaskGetTickCount() - message.sender->deadline;
+                if(lateness > max_lateness){
+                    printf("new max lateness: %d\n", lateness);
+                    max_lateness = lateness;
+                }
                 // Suspend sender task
                 deadline_removal((edd_task_t*)message.sender);//TODO: rename since not actually sender
                 // Remove sender task from priority queue
