@@ -47,12 +47,14 @@ xTaskHandle generator_task_handle;
  * activity task definitions
  */
 #define ACT_TASK_PERIOD 100
+#define ACT_TASK_RELATIVE_DEADLINE 10
 edd_task_t act_task_data;
 
 /*
  * heart rate task definitions
  */
-#define HRM_TASK_PERIOD 100
+#define HRM_TASK_PERIOD 71
+#define HRM_TASK_RELATIVE_DEADLINE 15
 edd_task_t hrm_task_data;
 
 /*

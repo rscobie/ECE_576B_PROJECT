@@ -57,12 +57,14 @@ void init_app() {
     act_task_data.deadline = ACT_TASK_PERIOD;
     act_task_data.periodic = true;
     act_task_data.period = ACT_TASK_PERIOD;
+    act_task_data.relative_deadline = ACT_TASK_RELATIVE_DEADLINE;
     act_task_data.task_func = activity_task;
     act_task_data.task = &act_task_handle;
 
     hrm_task_data.deadline = HRM_TASK_PERIOD;
     hrm_task_data.periodic = true;
-    hrm_task_data.period - HRM_TASK_PERIOD;
+    hrm_task_data.period = HRM_TASK_PERIOD;
+    hrm_task_data.relative_deadline = HRM_TASK_RELATIVE_DEADLINE;
     hrm_task_data.task_func = hr_monitor_task;
     hrm_task_data.task = &hrm_task_handle;
 
