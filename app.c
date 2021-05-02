@@ -267,21 +267,21 @@ void activity_task(void* pvParameters) {
                      msg.type = APP_ACT_TYPE_UPDATE;
               
                     memcpy(msg.data, &enum1, sizeof(activityType_t));
-                     printf("\nType 2 %d \n", enum1);
+                     //printf("\nType 2 %d \n", enum1);
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
             }
             else if(new<sedentary){
                      msg.type = APP_ACT_TYPE_UPDATE;
 
                     memcpy(msg.data, &enum2, sizeof(activityType_t));
-                    printf("\nType 2 %d \n", enum2);
+                    //printf("\nType 2 %d \n", enum2);
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
             }
             else{
                       msg.type = APP_ACT_TYPE_UPDATE;
                       
                     memcpy(msg.data, &enum3, sizeof(activityType_t));
-                    printf("\nType 2 %d \n", enum3);
+                    //printf("\nType 2 %d \n", enum3);
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
             }
         }
@@ -397,8 +397,10 @@ void app_task(void* pvParameters) {
                 act_time = act_time_min / 60;
                 if(hrate > 0 && hrate<100000){
                 // Suppose person wearing device is a man
-                calories = ((-55.0969 + 0.6309*hrate + 0.1988*weight
+                    if (calories < goal_calories){
+                    calories = ((-55.0969 + 0.6309*hrate + 0.1988*weight
                             + 0.2017*age)/4.184) * 60 * act_time;
+                    }
                 }
                 // Suppose person wearing device is a woman
                 /*calories = ((-20.4022 + 0.4472*hrate - 0.1263*weight
