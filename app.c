@@ -357,7 +357,7 @@ void app_task(void* pvParameters) {
 
     int goal_calories = 1000;
     int goal_steps = 100;
-    int goal_movTime = 30*60;
+    int goal_movTime = 20*60;
 
     double hrate = 0;           // Heart rate in beats/min
     const float weight = 70;    // Weight in kilograms 
