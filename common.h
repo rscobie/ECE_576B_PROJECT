@@ -81,6 +81,7 @@ typedef struct edd_task {
     time_t relative_deadline;
     void (*task_func)(void*);
     xTaskHandle* task;
+    bool first_time;
 } edd_task_t;
 
 typedef struct task_message_struct {
