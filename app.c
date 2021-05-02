@@ -300,9 +300,9 @@ void hr_monitor_task(void* pvParameters){
 
 	while(1){
 		//printf("hear rate task\n");
-		message.type=HRM_PPG_DATA;
+		msg.type=HW_PPG_REQUEST;
 
-		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);
+		xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
 		xQueueReceive(hrm_queue_handle, &message, portMAX_DELAY);
 		for(int j = 0; j<10; j++){
 			tensampleold[j] = tensamplenew[j];
