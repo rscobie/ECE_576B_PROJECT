@@ -41,7 +41,14 @@ void init_app() {
     }
 
     for (int i = 0; i < NUM_PPG_SAMPLES; ++i) {
-        ppg_samples[i] = i; //TODO: make this more realistic
+        if(i%2==0){
+        ppg_samples[i] = i+70; //TODO: make this more realistic
+        }
+        if(i%2==1){
+        ppg_samples[i] = i+80; //TODO: make this more realistic
+        }
+
+
     }
 
     for (int i = 0; i < NUM_IMU_SAMPLES; ++i) {
@@ -296,7 +303,7 @@ void activity_task(void* pvParameters) {
 void hr_monitor_task(void* pvParameters){
 	task_msg_t message = {};
 	task_msg_t msg = {};
-	int tensampleold[10];
+	 int tensampleold[10];
 	int tensamplenew[10];
 	static ppg_sample_t ppg_samples[NUM_PPG_SAMPLES];
 	double hrdata=0;
@@ -306,9 +313,9 @@ void hr_monitor_task(void* pvParameters){
 
 	while(1){
 		//printf("hear rate task\n");
-		message.type=HRM_PPG_DATA;
+		msg.type=HW_PPG_REQUEST;
 
-		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);
+		xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
 		xQueueReceive(hrm_queue_handle, &message, portMAX_DELAY);
 		for(int j = 0; j<10; j++){
 			tensampleold[j] = tensamplenew[j];
@@ -321,10 +328,13 @@ void hr_monitor_task(void* pvParameters){
 		memcpy(&tensamplenew[9],message.data,sizeof(imu_sample_t));
 
 		for(int counter = 0; counter<9; counter++){
-		hrdata += tensamplenew[counter+1]-tensamplenew[counter];
+		hrdata += tensamplenew[counter+1];
+        //-tensamplenew[counter];
 		}
 		hrdata = hrdata/9;
-		hrdata = 60000/hrdata;
+
+		//hrdata = 60000/hrdata;
+
 		msg.type = APP_HEARTRATE;
 		memcpy(msg.data, &hrdata, sizeof(hrdata));
 		
@@ -350,7 +360,7 @@ void app_task(void* pvParameters) {
     const int age = 25;
     float act_time = 0;           // Time in hours
     float act_time_min = 0;
-    int calories = 0;
+    double calories = 0;
     int act_type = -1;
     int curr_steps = 0;
 
@@ -361,10 +371,13 @@ void app_task(void* pvParameters) {
         task_got_evt(&app_task_data);
         switch(in_message.type){
             case APP_HEARTRATE:
-                hrate = (uintptr_t) in_message.data;
-                
+                memcpy(&hrate, in_message.data,sizeof(double));
+                //hrate = (uintptr_t) in_message.data;
+                char c[10];
+                sprintf(c, "%.0f \n", hrate);
                 out_message.type = APP_HEARTRATE;
-                memcpy(out_message.data, &hrate, sizeof(int));
+
+                memcpy(out_message.data, c, strlen(reminderStr)+1);
                 xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
                 break;
 
@@ -378,11 +391,11 @@ void app_task(void* pvParameters) {
                 }
                 
                 act_time = act_time_min / 60;
-
+                if(hrate > 0 && hrate<100000){
                 // Suppose person wearing device is a man
                 calories = ((-55.0969 + 0.6309*hrate + 0.1988*weight
                             + 0.2017*age)/4.184) * 60 * act_time;
-
+                }
                 // Suppose person wearing device is a woman
                 /*calories = ((-20.4022 + 0.4472*hrate - 0.1263*weight
                             + 0.074*age)/4.184) * 60 * act_time;*/
@@ -430,7 +443,7 @@ void app_task(void* pvParameters) {
         else{
             char reminder[] = "Let's try and do some quick exercises! Current calories: ";
             char c[10];
-            sprintf(c, "%i", calories);
+            sprintf(c, "%f", calories);
             strncat(reminder, &c, sizeof(int));
             strncat(reminder, "\n", sizeof(int));
 
