@@ -254,17 +254,23 @@ void activity_task(void* pvParameters) {
             if(new<sleeping){
                 //printf("if new<sleeping\n");
                      msg.type = APP_ACT_TYPE_UPDATE;
-                    memcpy(msg.data, &enum1, sizeof(int));
+              
+                    memcpy(msg.data, &enum1, sizeof(activityType_t));
+                     printf("\nType 2 %d \n", enum1);
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
             }
             else if(new<sedentary){
                      msg.type = APP_ACT_TYPE_UPDATE;
-                    memcpy(msg.data, &enum2, sizeof(int));
+
+                    memcpy(msg.data, &enum2, sizeof(activityType_t));
+                    printf("\nType 2 %d \n", enum2);
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
             }
             else{
                       msg.type = APP_ACT_TYPE_UPDATE;
-                    memcpy(msg.data, &enum3, sizeof(int));
+                      
+                    memcpy(msg.data, &enum3, sizeof(activityType_t));
+                    printf("\nType 2 %d \n", enum3);
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
             }
         }
@@ -343,7 +349,7 @@ void app_task(void* pvParameters) {
     const float weight = 70;    // Weight in kilograms 
     const int age = 25;
     float act_time = 0;           // Time in hours
-    int act_time_min = 0;
+    float act_time_min = 0;
     int calories = 0;
     int act_type = -1;
     int curr_steps = 0;
@@ -363,9 +369,10 @@ void app_task(void* pvParameters) {
                 break;
 
             case APP_ACT_TYPE_UPDATE:
-                act_type = (uintptr_t) in_message.data;
+                memcpy(&act_type, in_message.data,sizeof(activityType_t));
+                //act_type = (activityType_t)in_message.data;
 
-                if(act_type >= 3){
+                if(act_type == 3){
                     act_time_min++;
                     curr_steps += 10;
                 }
@@ -407,7 +414,7 @@ void app_task(void* pvParameters) {
         else{
             char reminder[] = "Hey there! Let's stand up for a bit. Current movement time: ";
             char c[10];
-            sprintf(c, "%i", act_time_min);
+            sprintf(c, "%f", act_time_min);
             strncat(reminder, &c, sizeof(int));
             strncat(reminder, "\n", sizeof(int));
             
