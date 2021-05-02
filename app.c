@@ -111,6 +111,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
     task_msg_t temp_msg = {};
     temp_msg.type = HW_NEXT_EVENT;
     xQueueSend(hw_queue_handle, &temp_msg, portMAX_DELAY);
+    time_t looptime= 0;
     while (1) {
         //printf("hardware task\n");
         xQueueReceive(hw_queue_handle, &message, portMAX_DELAY); //wait for message
@@ -122,9 +123,10 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
             hw_evt_t next_event = events[curr_evt];
             curr_evt++;
             if (curr_evt >= NUM_EVENTS) {
+                looptime = xTaskGetTickCount();
                 curr_evt = 0; //loop around to beginning
             }
-            int wait_time = next_event.time_stamp - xTaskGetTickCount();
+            int wait_time = next_event.time_stamp - xTaskGetTickCount()+looptime;
             if(wait_time < 0){
                 wait_time = 0;
             }
@@ -135,6 +137,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
             case HW_EVT_SHORT_PRESS:
             {
                 //send message to UI Task
+               // printf("SHORT");
                 task_msg_t msg = {};
                 msg.type = UI_SHORT_BUTTON_PRESS;
                 xQueueSend(ui_queue_handle, &msg, portMAX_DELAY);
@@ -143,6 +146,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
             case HW_EVT_LONG_PRESS:
             {
                 //send message to UI Task
+               // printf("LONG");
                 task_msg_t msg = {};
                 msg.type = UI_LONG_BUTTON_PRESS;
                 xQueueSend(ui_queue_handle, &msg, portMAX_DELAY);
@@ -154,7 +158,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
         case HW_IMU_REQUEST:
             //send message to Activity Task, data is vector of acceleration magnitudes
         {
-            //printf("hardware task imu request\n");
+           // printf("hardware task imu request\n");
             //send message to UI Task
             task_msg_t msg = {};
             msg.type = ACT_IMU_DATA;
@@ -173,7 +177,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
         case HW_PPG_REQUEST:
             //send message to HR Monitor Task, data is vector of timestamps indicating the peaks in the waveform
         {
-            //printf("hardware task ppg request\n");
+           // printf("hardware task ppg request\n");
             task_msg_t msg = {};
             msg.type = HRM_PPG_DATA;
             memcpy(msg.data, &ppg_samples[curr_ppg], sizeof(ppg_sample_t));
@@ -185,7 +189,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
         }
         break;
         case HW_SCREEN_UPDATE:
-            //printf("hardware task screen update\n");
+           // printf("hardware task screen update\n");
             //print “screen” to console. “Screen” is just a string sent in the data field of this task
             printf("%s", (char*)message.data);
             break;
