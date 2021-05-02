@@ -77,8 +77,8 @@ typedef enum {
 typedef struct edd_task {
     time_t deadline;
     bool periodic;
-    time_t period;
     bool first_time;
+    time_t period;
     time_t relative_deadline;
     void (*task_func)(void*);
     xTaskHandle* task;
