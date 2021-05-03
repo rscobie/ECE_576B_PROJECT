@@ -48,11 +48,11 @@ void init_app() {
         imu_samples[i] = i; //TODO: make this more realistic
     }
 
-    hw_queue_handle = xQueueCreate(10, sizeof(task_msg_t));
-    act_queue_handle = xQueueCreate(10, sizeof(task_msg_t));
-    hrm_queue_handle = xQueueCreate(10, sizeof(task_msg_t));
-    app_queue_handle = xQueueCreate(10, sizeof(task_msg_t));
-    ui_queue_handle = xQueueCreate(10, sizeof(task_msg_t));
+    hw_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
+    act_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
+    hrm_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
+    app_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
+    ui_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
 
     act_task_data.deadline = ACT_TASK_PERIOD;
     act_task_data.periodic = true;

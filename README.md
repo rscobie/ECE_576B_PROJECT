@@ -17,5 +17,7 @@ git submodule update --init --recursive
 ## build
 from inside the repository's root directory, call `make`
 
+to enable or disbable EDD scheduling, uncomment/comment the flag EDD_ENABLED in common.h
+
 ## run
 `./build/edd_scheduler`

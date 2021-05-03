@@ -1,12 +1,14 @@
 #include "edd.h"
 #include <limits.h>
 
+//performance metrics
 static int max_lateness = INT_MIN;
+static int num_late_tasks =  0;
 
 static edd_task_t* task_priority_queue[NUM_APP_TASKS];
 
 void init_scheduler(){
-    scheduler_queue_handle = xQueueCreate(10, sizeof(task_msg_t));
+    scheduler_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
     //init priority queue
     for(int i = 0; i < NUM_APP_TASKS; ++i){
         task_priority_queue[i] = NULL; //no function, indicates inactive
@@ -15,7 +17,6 @@ void init_scheduler(){
 
 void scheduler_task(void* pvParameters){
     task_msg_t message = {};
-    time_t lateness = INT_MIN;
     while(1){
         //printf("scheduler task\n");
         xQueueReceive(scheduler_queue_handle, &message, portMAX_DELAY); //Yield until message
@@ -135,6 +136,9 @@ void task_delay(edd_task_t* sender){
             printf("new max lateness: %d\n", lateness);
             max_lateness = lateness;
         }
+        if(lateness > 0){
+            num_late_tasks++;
+        }
     }
     // Recalculate deadline based on period (add period to deadline)
     if(lateness <= 0){
@@ -163,6 +167,9 @@ void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called
     if(lateness > max_lateness){
         printf("new max lateness: %d\n", lateness);
         max_lateness = lateness;
+    }
+    if(lateness > 0){
+        num_late_tasks++;
     }
     #ifdef EDD_ENABLED
     task_msg_t message = {};
@@ -209,6 +216,9 @@ void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be c
         if(lateness > max_lateness){
             printf("new max lateness: %d\n", lateness);
             max_lateness = lateness;
+        }
+        if(lateness > 0){
+            num_late_tasks++;
         }
     }
     #ifdef EDD_ENABLED
@@ -298,6 +308,7 @@ void monitor_task(void* pvParameters)
             printf("Current runtime %d ms\n", current_time);
             //vTaskDelete(xSADcalcHandle);
             //vTaskDelete(NULL);
+            vTaskSuspendAll();
         }
     }
 }

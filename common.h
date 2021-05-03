@@ -19,12 +19,20 @@ This file contains common definitions that are used throughout the program
 //and preemption for tasks of different priorities
 #define EDD_ENABLED
 
+//disable preemption for EDD, otherwise we'd be doing EDF
+#ifdef EDD_ENABLED
+#undef configUSE_PREEMPTION
+#define configUSE_PREEMPTION					0
+#endif
+
 #define NUM_APP_TASKS 4
 
 #define TASK_STACK_SIZE 1024 //bytes
 
 //TODO: change this if necessary
 #define MSG_DATA_SIZE 100 //max size in bytes of any data sent via message.
+
+#define MSG_QUEUE_SIZE 100
 
 //typedef uint32_t time_t;
 #ifndef __cplusplus //don't include this block if we're compiling with C++
@@ -82,7 +90,6 @@ typedef struct edd_task {
     time_t relative_deadline;
     void (*task_func)(void*);
     xTaskHandle* task;
-    bool first_time;
 } edd_task_t;
 
 typedef struct task_message_struct {

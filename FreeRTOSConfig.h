@@ -37,7 +37,7 @@
  * http://www.freertos.org/a00110.html
  *----------------------------------------------------------*/
 
-#define configUSE_PREEMPTION					1
+#define configUSE_PREEMPTION					1 //note: this is changed in common.h based on EDD_ENABLED flag
 #define configUse_TIME_SLCING					1 //default
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION	0
 #define configUSE_IDLE_HOOK						0//1
