@@ -4,10 +4,30 @@
 //performance metrics
 static int max_lateness = INT_MIN;
 static int num_late_tasks =  0;
+#define COMPLETION_NUM_CYCLES 1000
+static int completion_counter = 0; //will count out a certain number of task suspends, then save 'total completion time'
+static int total_completion_time = 0;
+//response times
+static int avg_app_response_time = 0;
+static int app_wait_time = 0;
+static int avg_hrm_response_time = 0;
+static int hrm_wait_time = 0;
+static int avg_ui_response_time = 0;
+static int ui_wait_time = 0;
+static int avg_act_response_time = 0;
+static int act_wait_time = 0;
+#define MEASURE_TASK_SWITCH
+#ifdef MEASURE_TASK_SWITCH
+char log_file_name[] = "tasks.log";
+FILE* log_file;
+#endif
 
 static edd_task_t* task_priority_queue[NUM_APP_TASKS];
 
 void init_scheduler(){
+    #ifdef MEASURE_TASK_SWITCH
+    log_file = fopen(log_file_name, "w");
+    #endif
     scheduler_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
     //init priority queue
     for(int i = 0; i < NUM_APP_TASKS; ++i){
@@ -80,7 +100,11 @@ void scheduler_task(void* pvParameters){
             vTaskPrioritySet(*(task_priority_queue[i]->task), BASE_APP_PRIORITY - i);
         }
         // send reply to messenger
-        //TODO: I think we can skip reply? 
+        //TODO: I think we can skip reply?
+        //make note of active task
+        #ifdef MEASURE_TASK_SWITCH
+        fprintf(log_file, "%s: %ld\n", pcTaskGetName(*task_priority_queue[0]->task), xTaskGetTickCount());
+        #endif
     }
 }
 
@@ -139,6 +163,12 @@ void task_delay(edd_task_t* sender){
         if(lateness > 0){
             num_late_tasks++;
         }
+        if(completion_counter < COMPLETION_NUM_CYCLES){
+            completion_counter++;
+        }
+        else{
+            total_completion_time = xTaskGetTickCount();
+        }
     }
     // Recalculate deadline based on period (add period to deadline)
     if(lateness <= 0){
@@ -170,6 +200,12 @@ void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called
     }
     if(lateness > 0){
         num_late_tasks++;
+    }
+    if(completion_counter < COMPLETION_NUM_CYCLES){
+        completion_counter++;
+    }
+    else{
+        total_completion_time = xTaskGetTickCount();
     }
     #ifdef EDD_ENABLED
     task_msg_t message = {};
@@ -219,6 +255,12 @@ void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be c
         }
         if(lateness > 0){
             num_late_tasks++;
+        }
+        if(completion_counter < COMPLETION_NUM_CYCLES){
+            completion_counter++;
+        }
+        else{
+            total_completion_time = xTaskGetTickCount();
         }
     }
     #ifdef EDD_ENABLED
