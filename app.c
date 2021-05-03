@@ -41,11 +41,21 @@ void init_app() {
     }
 
     for (int i = 0; i < NUM_PPG_SAMPLES; ++i) {
-        if(i%2==0){
-        ppg_samples[i] = i+70; //TODO: make this more realistic
+        
+        if(i<20){
+        ppg_samples[i] = 70+(20-i); //TODO: make this more realistic
         }
-        if(i%2==1){
-        ppg_samples[i] = i+80; //TODO: make this more realistic
+        else if(i<40){
+        ppg_samples[i] = 70+(45-i); //TODO: make this more realistic
+        }
+        else if(i<60){
+        ppg_samples[i] = 70+(60-i); //TODO: make this more realistic
+        }
+        else if(i<80){
+        ppg_samples[i] = 70+(75-i); //TODO: make this more realistic
+        }
+        else if(i<100){
+        ppg_samples[i] = 70+(90-i); //TODO: make this more realistic
         }
 
 
