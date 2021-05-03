@@ -16,18 +16,10 @@ static int avg_ui_response_time = 0;
 static int ui_wait_time = 0;
 static int avg_act_response_time = 0;
 static int act_wait_time = 0;
-#define MEASURE_TASK_SWITCH
-#ifdef MEASURE_TASK_SWITCH
-char log_file_name[] = "tasks.log";
-FILE* log_file;
-#endif
 
 static edd_task_t* task_priority_queue[NUM_APP_TASKS];
 
 void init_scheduler(){
-    #ifdef MEASURE_TASK_SWITCH
-    log_file = fopen(log_file_name, "w");
-    #endif
     scheduler_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
     //init priority queue
     for(int i = 0; i < NUM_APP_TASKS; ++i){
@@ -101,10 +93,10 @@ void scheduler_task(void* pvParameters){
         }
         // send reply to messenger
         //TODO: I think we can skip reply?
+        
+        //measure arrival time: TODO
+
         //make note of active task
-        #ifdef MEASURE_TASK_SWITCH
-        fprintf(log_file, "%s: %ld\n", pcTaskGetName(*task_priority_queue[0]->task), xTaskGetTickCount());
-        #endif
     }
 }
 
@@ -177,6 +169,12 @@ void task_delay(edd_task_t* sender){
     else{ //if we missed deadline, add to current time //TODO: is this OK to do?
         sender->deadline = xTaskGetTickCount() + sender->period;
     }
+    
+    //keep track of wait time
+    // if(sender == &ui_task_data){
+
+    // }
+
     #ifdef EDD_ENABLED
     task_msg_t message = {};
     message.type = EDD_TASK_PERIODIC_DELAY;

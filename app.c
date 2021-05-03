@@ -3,6 +3,12 @@
 #include "app.h"
 #include "edd.h"
 
+#define MEASURE_TASK_SWITCH
+#ifdef MEASURE_TASK_SWITCH
+char log_file_name[] = "tasks.log";
+FILE* log_file;
+#endif
+
 //stuff for hardware task
 static xQueueHandle hw_queue_handle;
 static hw_evt_t events[NUM_EVENTS]; //this is populated before the scheduler starts, in order of timestamp
@@ -30,6 +36,9 @@ static xTaskHandle ui_task_handle;
 static xQueueHandle ui_queue_handle;
 
 void init_app() {
+    #ifdef MEASURE_TASK_SWITCH
+    log_file = fopen(log_file_name, "w");
+    #endif
     for (int i = 0; i < NUM_EVENTS; ++i) {
         if (i % 2 == 0) { //TODO: make this more realistic
             events[i].event_type = HW_EVT_LONG_PRESS;
@@ -243,7 +252,10 @@ void activity_task(void* pvParameters) {
         old=0;
 		message.type = HW_IMU_REQUEST;
 		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);//give me my msg hw
-		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message	
+		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message
+        #ifdef MEASURE_TASK_SWITCH
+        fprintf(log_file, "activity: %ld\n", xTaskGetTickCount());
+        #endif	
         //printf("message received\n");
 
         for(int j = 0; j<10; j++){
@@ -331,6 +343,9 @@ void hr_monitor_task(void* pvParameters){
 
 		xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
 		xQueueReceive(hrm_queue_handle, &message, portMAX_DELAY);
+        #ifdef MEASURE_TASK_SWITCH
+        fprintf(log_file, "hrm: %ld\n", xTaskGetTickCount());
+        #endif
 		for(int j = 0; j<10; j++){
 			tensampleold[j] = tensamplenew[j];
 		}
@@ -382,6 +397,9 @@ void app_task(void* pvParameters) {
         //printf("app task\n");
         task_wait_for_evt(&app_task_data);
         xQueueReceive(app_queue_handle, &in_message, portMAX_DELAY);
+        #ifdef MEASURE_TASK_SWITCH
+        fprintf(log_file, "app: %ld\n", xTaskGetTickCount());
+        #endif
         task_got_evt(&app_task_data);
         switch(in_message.type){
             case APP_HEARTRATE:
@@ -479,6 +497,9 @@ void ui_task(void* pvParameters) {
         //printf("ui task\n");
         task_wait_for_evt(&ui_task_data);
         xQueueReceive(ui_queue_handle, &message, portMAX_DELAY); //wait for message
+        #ifdef MEASURE_TASK_SWITCH
+        fprintf(log_file, "ui: %ld\n", xTaskGetTickCount());
+        #endif
         task_got_evt(&ui_task_data);
 
         switch (message.type) {
