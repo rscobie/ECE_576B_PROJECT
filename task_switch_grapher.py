@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 
 in_file = open('tasks.log', 'r')
+thisfile = in_file.readlines()
 
 app_list = list()
 ui_list = list()
@@ -9,9 +10,10 @@ hrm_list = list()
 
 last_time = 0
 
-for line in in_file:
-    # if line == in_file[-1]: #skip last line in case it wasn't completely written to file
-    #     break
+for line in thisfile:
+    if line == thisfile[len(thisfile)-1]: #skip last line in case it wasn't completely written to file
+        break
+    print(line)
     temp = line.split(":")
     task = temp[0].strip()
     timestamp = int(temp[1].strip()) #maybe make this float if we can get better timestamp
