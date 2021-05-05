@@ -1,12 +1,15 @@
 #include "edd.h"
 #include <limits.h>
 
+char late_file_name[] = "lateness.log";
+FILE* late_file;
 //performance metrics
 static int max_lateness = INT_MIN;
 static int num_late_tasks =  0;
 #define COMPLETION_NUM_CYCLES 1000
 static int completion_counter = 0; //will count out a certain number of task suspends, then save 'total completion time'
 static int total_completion_time = 0;
+
 //response times
 static int avg_app_response_time = 0;
 static int app_wait_time = 0;
@@ -21,6 +24,9 @@ static edd_task_t* task_priority_queue[NUM_APP_TASKS];
 
 void init_scheduler(){
     scheduler_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
+    //late_file = fopen(late_file_name, "a");
+    //fprintf(late_file, "this");
+    //fclose(late_file);
     //init priority queue
     for(int i = 0; i < NUM_APP_TASKS; ++i){
         task_priority_queue[i] = NULL; //no function, indicates inactive
@@ -31,6 +37,7 @@ void scheduler_task(void* pvParameters){
     task_msg_t message = {};
     while(1){
         //printf("scheduler task\n");
+        //printf("here 1111");
         xQueueReceive(scheduler_queue_handle, &message, portMAX_DELAY); //Yield until message
         //printf("%s\n", message.data);
         switch (message.type) {
@@ -85,6 +92,7 @@ void scheduler_task(void* pvParameters){
         }
         //update priorities here
         for(int i = 0; i < NUM_APP_TASKS; ++i){
+            //printf("here 2222");
             if(task_priority_queue[i] == NULL){
                 break;
             }
@@ -102,6 +110,7 @@ void scheduler_task(void* pvParameters){
 
 //scheduler helper functions 
 void deadline_insertion( edd_task_t* sender ){
+    //printf("here 3333");
 	//Insert task_handler into the vector task_priority_queue //first deadline is first element
     int index = 0;
     for(int i = 0; i < NUM_APP_TASKS; ++i){
@@ -124,6 +133,7 @@ void deadline_insertion( edd_task_t* sender ){
 
 void deadline_removal(edd_task_t* sender ){
 	//Locate the task and Delete the task_handler from the vector,
+   // printf("here 4444");
     int index = 0;
     for(int i = 0; i < NUM_APP_TASKS; ++i){
         if(task_priority_queue[i] == NULL || task_priority_queue[i]->task == sender->task){
@@ -141,6 +151,7 @@ void deadline_removal(edd_task_t* sender ){
 }
 
 void task_delay(edd_task_t* sender){
+    //printf("here 5555");
     time_t lateness = INT_MIN;
     if(sender->first_time){
         sender->first_time = false;
@@ -149,7 +160,10 @@ void task_delay(edd_task_t* sender){
     else{
         lateness = xTaskGetTickCount() - sender->deadline;
         if(lateness > max_lateness){
-            printf("new max lateness: %d\n", lateness);
+        printf("new max lateness: %d\n", lateness);
+           // late_file = fopen(late_file_name, "a");
+           // fprintf(late_file, "new max lateness: %d\n", (int)lateness);
+            //fclose(late_file);
             max_lateness = lateness;
         }
         if(lateness > 0){
@@ -189,11 +203,15 @@ void task_delay(edd_task_t* sender){
     }
 }
 
-void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called from different task
-    time_t lateness = INT_MIN;
+void task_suspend(edd_task_t* sender){ 
+        time_t lateness = INT_MIN;
+    //printf("here 6666");
     lateness = xTaskGetTickCount() - sender->deadline;
     if(lateness > max_lateness){
-        printf("new max lateness: %d\n", lateness);
+     printf("new max lateness: %d\n", lateness);
+       // late_file = fopen(late_file_name, "a");
+         //   fprintf(late_file, "new max lateness: %d\n", (int)lateness);
+         // fclose(late_file);
         max_lateness = lateness;
     }
     if(lateness > 0){
@@ -219,7 +237,8 @@ void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called
     vTaskSuspend(*sender->task);
 }
 
-void task_resume(edd_task_t* sender){//TODO: should rename since can be called from different task
+void task_resume(edd_task_t* sender){
+    //printf("here 7777");
     if(sender->periodic){
         sender->deadline = xTaskGetTickCount() + sender->period;
     }
@@ -240,15 +259,19 @@ void task_resume(edd_task_t* sender){//TODO: should rename since can be called f
     vTaskResume(*sender->task);
 }
 
-void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be called from different task
+void task_wait_for_evt(edd_task_t* sender){
     time_t lateness = INT_MIN;
+  //  printf("here 8888");
     if(sender->first_time){
         sender->first_time = false;
     }
     else{
         lateness = xTaskGetTickCount() - sender->deadline;
         if(lateness > max_lateness){
-            printf("new max lateness: %d\n", lateness);
+           printf("new max lateness: %d\n", lateness);
+          //  late_file = fopen(late_file_name, "a");
+           //     fprintf(late_file, "new max lateness: %d\n", (int)lateness);
+           //   fclose(late_file);
             max_lateness = lateness;
         }
         if(lateness > 0){
@@ -274,7 +297,8 @@ void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be c
     #endif
 }
 
-void task_got_evt(edd_task_t* sender){//TODO: should rename since can be called from different task
+void task_got_evt(edd_task_t* sender){
+    //printf("here 9999");
     if(sender->periodic){
         sender->deadline = xTaskGetTickCount() + sender->period;
     }
@@ -295,6 +319,7 @@ void task_got_evt(edd_task_t* sender){//TODO: should rename since can be called 
 }
 
 void task_create(edd_task_t* sender, char* name, priority_t priority){
+    //printf("here 9111");
     //printf("%s\n", name);
     xTaskCreate(sender->task_func, name, TASK_STACK_SIZE, NULL, priority, sender->task );
     #ifdef EDD_ENABLED
@@ -312,6 +337,7 @@ void task_create(edd_task_t* sender, char* name, priority_t priority){
 }
 
 void task_delete(edd_task_t* sender){
+    //printf("here 5222");
     #ifdef EDD_ENABLED
 	// Create message to scheduler that a task handler will be deleted
 	task_msg_t message = {};
@@ -337,6 +363,7 @@ void monitor_task(void* pvParameters)
 
         if (current_time < MAX_TIME)
         {
+            //printf("here 3434");
             printf("Current time: %d ms\n", current_time);
 
             srand(current_time);
