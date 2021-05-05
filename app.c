@@ -1,14 +1,13 @@
-
-
+ 
 #include "app.h"
 #include "edd.h"
-
+ 
 #define MEASURE_TASK_SWITCH
 #ifdef MEASURE_TASK_SWITCH
 char log_file_name[] = "tasks.log";
 FILE* log_file;
 #endif
-
+ 
 //stuff for hardware task
 static xQueueHandle hw_queue_handle;
 static hw_evt_t events[NUM_EVENTS]; //this is populated before the scheduler starts, in order of timestamp
@@ -18,7 +17,7 @@ static int curr_ppg = 0;
 static int curr_imu = 0;
 static int curr_evt = 0;
 static TimerHandle_t hw_timer;
-
+ 
 //stuff for activity task
 static xTaskHandle act_task_handle;
 static xQueueHandle act_queue_handle;
@@ -26,15 +25,15 @@ typedef enum activityType{Sleeping, Sedentary, Exercise, NotChanged}activityType
 //stuff for hr monitor task
 static xTaskHandle hrm_task_handle;
 static xQueueHandle hrm_queue_handle;
-
+ 
 //stuff for app task
 static xTaskHandle app_task_handle;
 static xQueueHandle app_queue_handle;
-
+ 
 //stuff for ui task
 static xTaskHandle ui_task_handle;
 static xQueueHandle ui_queue_handle;
-
+ 
 void init_app() {
     #ifdef MEASURE_TASK_SWITCH
     log_file = fopen(log_file_name, "w");
@@ -48,9 +47,9 @@ void init_app() {
         }
         events[i].time_stamp = i*870; //choose weird number
     }
-
+ 
     for (int i = 0; i < NUM_PPG_SAMPLES; ++i) {
-        
+ 
         if(i<20){
         ppg_samples[i] = 70+(20-i); //TODO: make this more realistic
         }
@@ -66,20 +65,20 @@ void init_app() {
         else if(i<100){
         ppg_samples[i] = 70+(90-i); //TODO: make this more realistic
         }
-
-
+ 
+ 
     }
-
+ 
     for (int i = 0; i < NUM_IMU_SAMPLES; ++i) {
         imu_samples[i] = i; //TODO: make this more realistic
     }
-
+ 
     hw_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
     act_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
     hrm_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
     app_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
     ui_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
-
+ 
     act_task_data.deadline = ACT_TASK_PERIOD;
     act_task_data.periodic = true;
     act_task_data.period = ACT_TASK_PERIOD;
@@ -87,7 +86,7 @@ void init_app() {
     act_task_data.task_func = activity_task;
     act_task_data.task = &act_task_handle;
     act_task_data.first_time = true;
-
+ 
     hrm_task_data.deadline = HRM_TASK_PERIOD;
     hrm_task_data.periodic = true;
     hrm_task_data.period = HRM_TASK_PERIOD;
@@ -95,14 +94,14 @@ void init_app() {
     hrm_task_data.task_func = hr_monitor_task;
     hrm_task_data.task = &hrm_task_handle;
     hrm_task_data.first_time = true;
-
+ 
     app_task_data.deadline = 0;
     app_task_data.periodic = false;
     app_task_data.relative_deadline = APP_TASK_RELATIVE_DEADLINE;
     app_task_data.task_func = app_task;
     app_task_data.task = &app_task_handle;
     app_task_data.first_time = true;
-
+ 
     ui_task_data.deadline = 0;
     ui_task_data.periodic = false;
     ui_task_data.relative_deadline = UI_TASK_RELATIVE_DEADLINE;
@@ -110,19 +109,19 @@ void init_app() {
     ui_task_data.task = &ui_task_handle;
     ui_task_data.first_time = true;
 }
-
+ 
 void hw_timer_callback(TimerHandle_t xTimer) {
     //Send NEXT_EVENT message to hardware task
     task_msg_t msg = {};
     msg.type = HW_NEXT_EVENT;
-    
-
+ 
+ 
     xTimerStop(hw_timer, portMAX_DELAY);
     xTimerDelete(hw_timer, portMAX_DELAY);
-
+ 
     xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
 }
-
+ 
 // aperiodic
 void hardware_task(void* pvParameters) { //this should have higher priority than rest, but lower priority than scheduler
     task_msg_t message = {};
@@ -134,7 +133,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
     while (1) {
         //printf("hardware task\n");
         xQueueReceive(hw_queue_handle, &message, portMAX_DELAY); //wait for message
-
+ 
         switch (message.type) {
         case HW_NEXT_EVENT:
         {//adds local scoping to switch statement
@@ -151,7 +150,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
             }
             hw_timer = xTimerCreate("hw_evt_timer", wait_time, pdFALSE, (void*)HW_EVT_TIMER, hw_timer_callback); //TODO: make sure this isn't negative, and that void* cast is OK
             xTimerStart(hw_timer, portMAX_DELAY);//TODO: need to delete this timer later
-
+ 
             switch (next_event.event_type) {
             case HW_EVT_SHORT_PRESS:
             {
@@ -215,7 +214,7 @@ void hardware_task(void* pvParameters) { //this should have higher priority than
         }
     }
 }
-
+ 
 void generator_task(void* pvParameters) {
     while (1) {
         //printf("generator task\n");
@@ -227,7 +226,7 @@ void generator_task(void* pvParameters) {
         vTaskDelete(generator_task_handle); //delete self
     }
 }
-
+ 
 void activity_task(void* pvParameters) {
 	task_msg_t message = {};
 	task_msg_t msg = {};
@@ -245,7 +244,7 @@ void activity_task(void* pvParameters) {
     int enum4 = 4;
 	static ppg_sample_t ppg_samples[NUM_PPG_SAMPLES];
 	double hrdata=0;
-
+ 
 	while(1){
         //printf("activity task\n");
         new=0;
@@ -254,17 +253,17 @@ void activity_task(void* pvParameters) {
 		xQueueSend(hw_queue_handle, &message, portMAX_DELAY);//give me my msg hw
 		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message
         #ifdef MEASURE_TASK_SWITCH
-        fprintf(log_file, "activity: %ld\n", xTaskGetTickCount());
+        fprintf(log_file, "activity: %ld\n", clock());
         #endif	
         //printf("message received\n");
-
+ 
         for(int j = 0; j<10; j++){
 			tensampleold[j] = tensamplenew[j];
             old+=tensamplenew[j];
             //printf("sample old: %d - sample new: %d - old: %d\n");
 		}
         //printf("first for\n");
-		
+ 
 		for(int i = 0; i<9; i++){
 		    tensamplenew[i]=tensampleold[i+1];
             new+=tensamplenew[i];
@@ -287,21 +286,21 @@ void activity_task(void* pvParameters) {
             if(new<sleeping){
                 //printf("if new<sleeping\n");
                      msg.type = APP_ACT_TYPE_UPDATE;
-              
+ 
                     memcpy(msg.data, &enum1, sizeof(activityType_t));
                      //printf("\nType 2 %d \n", enum1);
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
             }
             else if(new<sedentary){
                      msg.type = APP_ACT_TYPE_UPDATE;
-
+ 
                     memcpy(msg.data, &enum2, sizeof(activityType_t));
                     //printf("\nType 2 %d \n", enum2);
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
             }
             else{
                       msg.type = APP_ACT_TYPE_UPDATE;
-                      
+ 
                     memcpy(msg.data, &enum3, sizeof(activityType_t));
                     //printf("\nType 2 %d \n", enum3);
                     xQueueSend(app_queue_handle, &msg, portMAX_DELAY);
@@ -321,11 +320,11 @@ void activity_task(void* pvParameters) {
 		}
 		task_delay(&act_task_data);
 	}
-    
-
-
+ 
+ 
+ 
 }
-
+ 
 void hr_monitor_task(void* pvParameters){
 	task_msg_t message = {};
 	task_msg_t msg = {};
@@ -336,54 +335,54 @@ void hr_monitor_task(void* pvParameters){
 	//What do I even make this
 	//ask rory what he wanted for the task_delay 
 	const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
-
+ 
 	while(1){
 		//printf("hear rate task\n");
 		msg.type=HW_PPG_REQUEST;
-
+ 
 		xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
 		xQueueReceive(hrm_queue_handle, &message, portMAX_DELAY);
         #ifdef MEASURE_TASK_SWITCH
-        fprintf(log_file, "hrm: %ld\n", xTaskGetTickCount());
+        fprintf(log_file, "hrm: %ld\n", clock());
         #endif
 		for(int j = 0; j<10; j++){
 			tensampleold[j] = tensamplenew[j];
 		}
-		
+ 
 		for(int i = 0; i<9; i++){
 		tensamplenew[i]=tensampleold[i+1];
 		}
-
+ 
 		memcpy(&tensamplenew[9],message.data,sizeof(imu_sample_t));
-
+ 
 		for(int counter = 0; counter<9; counter++){
 		hrdata += tensamplenew[counter+1];
         //-tensamplenew[counter];
 		}
 		hrdata = hrdata/9;
-
+ 
 		//hrdata = 60000/hrdata;
-
+ 
 		msg.type = APP_HEARTRATE;
 		memcpy(msg.data, &hrdata, sizeof(hrdata));
-		
+ 
 		xQueueSend(app_queue_handle, &msg, portMAX_DELAY);	
 		task_delay(&hrm_task_data);
-		
+ 
 	}
-
+ 
 }
-
+ 
 void app_task(void* pvParameters) {
     task_msg_t in_message = {};
     task_msg_t out_message = {};
-
+ 
     char reminderStr[60];
-
+ 
     int goal_calories = 1000;
     int goal_steps = 100;
     int goal_movTime = 20*60;
-
+ 
     double hrate = 0;           // Heart rate in beats/min
     const float weight = 70;    // Weight in kilograms 
     const int age = 25;
@@ -392,13 +391,13 @@ void app_task(void* pvParameters) {
     double calories = 0;
     int act_type = -1;
     int curr_steps = 0;
-
+ 
     while(1){
         //printf("app task\n");
         task_wait_for_evt(&app_task_data);
         xQueueReceive(app_queue_handle, &in_message, portMAX_DELAY);
         #ifdef MEASURE_TASK_SWITCH
-        fprintf(log_file, "app: %ld\n", xTaskGetTickCount());
+        fprintf(log_file, "app: %ld\n", clock());
         #endif
         task_got_evt(&app_task_data);
         switch(in_message.type){
@@ -408,20 +407,20 @@ void app_task(void* pvParameters) {
                 char c[10];
                 sprintf(c, "%.0f \n", hrate);
                 out_message.type = APP_HEARTRATE;
-
+ 
                 memcpy(out_message.data, c, strlen(reminderStr)+1);
                 xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
                 break;
-
+ 
             case APP_ACT_TYPE_UPDATE:
                 memcpy(&act_type, in_message.data,sizeof(activityType_t));
                 //act_type = (activityType_t)in_message.data;
-
+ 
                 if(act_type == 3){
                     act_time_min++;
                     curr_steps += 10;
                 }
-                
+ 
                 act_time = act_time_min / 60;
                 if(hrate > 0 && hrate<100000){
                 // Suppose person wearing device is a man
@@ -435,7 +434,7 @@ void app_task(void* pvParameters) {
                             + 0.074*age)/4.184) * 60 * act_time;*/
                 break;
         }
-
+ 
         // Reminders
         out_message.type = APP_REMINDER;
         if(curr_steps >= goal_steps){
@@ -448,12 +447,12 @@ void app_task(void* pvParameters) {
             sprintf(c, "%i", curr_steps);
             strncat(reminder, &c, sizeof(int));
             strncat(reminder, "\n", sizeof(int));
-            
+ 
             strcpy(reminderStr, &reminder);
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
-
+ 
         if(act_time_min >= goal_movTime){
             strcpy(reminderStr, "Way to go! Goal movement time completed!\n");
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
@@ -464,12 +463,12 @@ void app_task(void* pvParameters) {
             sprintf(c, "%f", act_time_min);
             strncat(reminder, &c, sizeof(int));
             strncat(reminder, "\n", sizeof(int));
-            
+ 
             strcpy(reminderStr, &reminder);
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
-
+ 
         if(calories >= goal_calories){
             strcpy(reminderStr, "Hurray! You are the best! Goal calories completed!\n");
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
@@ -480,30 +479,30 @@ void app_task(void* pvParameters) {
             sprintf(c, "%f", calories);
             strncat(reminder, &c, sizeof(int));
             strncat(reminder, "\n", sizeof(int));
-
+ 
             strcpy(reminderStr, &reminder);
             memcpy(out_message.data, reminderStr, strlen(reminderStr)+1);
         }
         xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
     }
 }
-
+ 
 void ui_task(void* pvParameters) {
     task_msg_t message = {};
     task_msg_t msg = {};
     char messageStr[30]; 
-
+ 
     while (1) {
         //printf("ui task\n");
         task_wait_for_evt(&ui_task_data);
         xQueueReceive(ui_queue_handle, &message, portMAX_DELAY); //wait for message
         #ifdef MEASURE_TASK_SWITCH
-        fprintf(log_file, "ui: %ld\n", xTaskGetTickCount());
+        fprintf(log_file, "ui: %ld\n", clock());
         #endif
         task_got_evt(&ui_task_data);
-
+ 
         switch (message.type) {
-
+ 
             // hardware events 
         case UI_SHORT_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
@@ -511,14 +510,14 @@ void ui_task(void* pvParameters) {
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
-
+ 
         case UI_LONG_BUTTON_PRESS:
             msg.type = HW_SCREEN_UPDATE;
             strcpy(messageStr, "Device shut off\n"); 
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
-
+ 
             // app events 
         case APP_REMINDER:
             msg.type = HW_SCREEN_UPDATE;
@@ -527,7 +526,7 @@ void ui_task(void* pvParameters) {
             memcpy(msg.data, messageStr, strlen(messageStr)+1);
             xQueueSend(hw_queue_handle, &msg, portMAX_DELAY);
             break;
-
+ 
         case APP_HEARTRATE:
             msg.type = HW_SCREEN_UPDATE;
             strcpy(messageStr, "Heart rate: "); 
