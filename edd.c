@@ -17,9 +17,20 @@ static int ui_wait_time = 0;
 static int avg_act_response_time = 0;
 static int act_wait_time = 0;
 
+char lateness_file_name[] = "lateness.log";
+FILE* lateness_file;
+char lateTask_file_name[] = "lateTask.log";
+FILE* lateTask_file;
+
+
+
 static edd_task_t* task_priority_queue[NUM_APP_TASKS];
 
 void init_scheduler(){
+    #ifdef EDD_ENABLED
+    lateness_file = fopen(lateness_file_name, "w");
+    lateTask_file = fopen(lateTask_file_name, "w");
+    #endif
     scheduler_queue_handle = xQueueCreate(MSG_QUEUE_SIZE, sizeof(task_msg_t));
     //init priority queue
     for(int i = 0; i < NUM_APP_TASKS; ++i){
@@ -147,13 +158,19 @@ void task_delay(edd_task_t* sender){
         lateness = 1;//just to get use to add period to the current time, doesn't effect max lateness
     }
     else{
+        #ifndef EDD_ENABLED
+        lateness_file = fopen(lateness_file_name, "a");
+        lateTask_file = fopen(lateTask_file_name, "a");
+        #endif
         lateness = xTaskGetTickCount() - sender->deadline;
         if(lateness > max_lateness){
             printf("new max lateness: %d\n", lateness);
             max_lateness = lateness;
+            fprintf(lateness_file, "%ld\n", max_lateness);
         }
         if(lateness > 0){
             num_late_tasks++;
+            fprintf(lateTask_file, "%ld\n", num_late_tasks);
         }
         if(completion_counter < COMPLETION_NUM_CYCLES){
             completion_counter++;
@@ -192,12 +209,18 @@ void task_delay(edd_task_t* sender){
 void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called from different task
     time_t lateness = INT_MIN;
     lateness = xTaskGetTickCount() - sender->deadline;
+    #ifndef EDD_ENABLED
+    lateness_file = fopen(lateness_file_name, "a");
+    lateTask_file = fopen(lateTask_file_name, "a");
+    #endif
     if(lateness > max_lateness){
         printf("new max lateness: %d\n", lateness);
         max_lateness = lateness;
+        fprintf(lateness_file, "%ld\n", max_lateness);
     }
     if(lateness > 0){
         num_late_tasks++;
+        fprintf(lateTask_file, "%ld\n", num_late_tasks);
     }
     if(completion_counter < COMPLETION_NUM_CYCLES){
         completion_counter++;
@@ -247,12 +270,18 @@ void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be c
     }
     else{
         lateness = xTaskGetTickCount() - sender->deadline;
+        #ifndef EDD_ENABLED
+        lateness_file = fopen(lateness_file_name, "a");
+        lateTask_file = fopen(lateTask_file_name, "a");
+        #endif
         if(lateness > max_lateness){
             printf("new max lateness: %d\n", lateness);
             max_lateness = lateness;
+            fprintf(lateness_file, "%ld\n", max_lateness);
         }
         if(lateness > 0){
             num_late_tasks++;
+            fprintf(lateTask_file, "%ld\n", num_late_tasks);
         }
         if(completion_counter < COMPLETION_NUM_CYCLES){
             completion_counter++;

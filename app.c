@@ -7,6 +7,7 @@
 char log_file_name[] = "tasks.log";
 FILE* log_file;
 #endif
+
  
 //stuff for hardware task
 static xQueueHandle hw_queue_handle;
@@ -38,6 +39,7 @@ void init_app() {
     #ifdef MEASURE_TASK_SWITCH
     log_file = fopen(log_file_name, "w");
     #endif
+
     for (int i = 0; i < NUM_EVENTS; ++i) {
         if (i % 2 == 0) { //TODO: make this more realistic
             events[i].event_type = HW_EVT_LONG_PRESS;
