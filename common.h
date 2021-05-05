@@ -17,13 +17,14 @@ This file contains common definitions that are used throughout the program
 //if defined, the EDD scheduler will be used. Otherwise, the vanilla FreeRTOS scheduler will be used.
 //by default, the FreeRTOS scheduler will use round robin for tasks of the same priority
 //and preemption for tasks of different priorities
-#define EDD_ENABLED
+//#define EDD_ENABLED
 
 //disable preemption for EDD, otherwise we'd be doing EDF
 #ifdef EDD_ENABLED
 #undef configUSE_PREEMPTION
 #define configUSE_PREEMPTION					0
 #endif
+
 
 #define NUM_APP_TASKS 4
 
@@ -97,5 +98,6 @@ typedef struct task_message_struct {
     edd_task_t* sender;
     byte data[MSG_DATA_SIZE];
 } task_msg_t;
+
 
 #endif
