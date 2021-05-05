@@ -13,7 +13,6 @@ last_time = 0
 for line in thisfile:
     if line == thisfile[len(thisfile)-1]: #skip last line in case it wasn't completely written to file
         break
-    print(line)
     temp = line.split(":")
     task = temp[0].strip()
     timestamp = int(temp[1].strip()) #maybe make this float if we can get better timestamp
@@ -48,4 +47,4 @@ ax.set_yticks([15, 25, 35, 45])
 ax.set_yticklabels(['App', 'UI', 'Activity', 'HRM'])
 ax.grid(True)
 
-plt.show()
+plt.show()S
