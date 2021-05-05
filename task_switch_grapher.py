@@ -48,4 +48,4 @@ ax.set_yticks([15, 25, 35, 45])
 ax.set_yticklabels(['App', 'UI', 'Activity', 'HRM'])
 ax.grid(True)
 
-plt.show()
+plt.show()S
