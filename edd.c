@@ -166,11 +166,11 @@ void task_delay(edd_task_t* sender){
         if(lateness > max_lateness){
             printf("new max lateness: %d\n", lateness);
             max_lateness = lateness;
-            fprintf(lateness_file, "%ld\n", max_lateness);
+            fprintf(lateness_file, "%d\n", max_lateness);
         }
         if(lateness > 0){
             num_late_tasks++;
-            fprintf(lateTask_file, "%ld\n", num_late_tasks);
+            fprintf(lateTask_file, "%d\n", num_late_tasks);
         }
         if(completion_counter < COMPLETION_NUM_CYCLES){
             completion_counter++;
@@ -216,11 +216,11 @@ void task_suspend(edd_task_t* sender){ //TODO: should rename since can be called
     if(lateness > max_lateness){
         printf("new max lateness: %d\n", lateness);
         max_lateness = lateness;
-        fprintf(lateness_file, "%ld\n", max_lateness);
+        fprintf(lateness_file, "%d\n", max_lateness);
     }
     if(lateness > 0){
         num_late_tasks++;
-        fprintf(lateTask_file, "%ld\n", num_late_tasks);
+        fprintf(lateTask_file, "%d\n", num_late_tasks);
     }
     if(completion_counter < COMPLETION_NUM_CYCLES){
         completion_counter++;
@@ -277,11 +277,11 @@ void task_wait_for_evt(edd_task_t* sender){ //TODO: should rename since can be c
         if(lateness > max_lateness){
             printf("new max lateness: %d\n", lateness);
             max_lateness = lateness;
-            fprintf(lateness_file, "%ld\n", max_lateness);
+            fprintf(lateness_file, "%d\n", max_lateness);
         }
         if(lateness > 0){
             num_late_tasks++;
-            fprintf(lateTask_file, "%ld\n", num_late_tasks);
+            fprintf(lateTask_file, "%d\n", num_late_tasks);
         }
         if(completion_counter < COMPLETION_NUM_CYCLES){
             completion_counter++;
