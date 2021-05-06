@@ -17,7 +17,7 @@ This file contains common definitions that are used throughout the program
 //if defined, the EDD scheduler will be used. Otherwise, the vanilla FreeRTOS scheduler will be used.
 //by default, the FreeRTOS scheduler will use round robin for tasks of the same priority
 //and preemption for tasks of different priorities
-//#define EDD_ENABLED
+#define EDD_ENABLED
 
 //disable preemption for EDD, otherwise we'd be doing EDF
 #ifdef EDD_ENABLED
@@ -87,7 +87,9 @@ typedef struct edd_task {
     time_t deadline;
     bool periodic;
     bool first_time;
+    int max_Lateness;
     time_t period;
+    char name[100];
     time_t relative_deadline;
     void (*task_func)(void*);
     xTaskHandle* task;

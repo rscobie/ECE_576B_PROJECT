@@ -174,17 +174,23 @@ void task_delay(edd_task_t* sender){
         lateTask_file = fopen(lateTask_file_name, "a");
         #endif
         lateness = xTaskGetTickCount() - sender->deadline;
+        if(lateness>sender->max_Lateness){
+        //late_file = fopen(late_file_name, "a");
+        //fprintf(late_file, "%s new max lateness: %d\n", sender->name, (int)lateness);
+        //fclose(late_file);
+            sender->max_Lateness=lateness;
+        }
         if(lateness > max_lateness){
         printf("new max lateness: %d\n", lateness);
            // late_file = fopen(late_file_name, "a");
            // fprintf(late_file, "new max lateness: %d\n", (int)lateness);
             //fclose(late_file);
             max_lateness = lateness;
-            fprintf(lateness_file, "%d\n", max_lateness);
+            
         }
         if(lateness > 0){
             num_late_tasks++;
-            fprintf(lateTask_file, "%d\n", num_late_tasks);
+           
         }
         if(completion_counter < COMPLETION_NUM_CYCLES){
             completion_counter++;
@@ -228,6 +234,12 @@ void task_suspend(edd_task_t* sender){
     lateness_file = fopen(lateness_file_name, "a");
     lateTask_file = fopen(lateTask_file_name, "a");
     #endif
+     if(lateness>sender->max_Lateness){
+        late_file = fopen(late_file_name, "a");
+        fprintf(late_file, "%s new max lateness: %d\n", sender->name, (int)lateness);
+        fclose(late_file);
+            sender->max_Lateness=lateness;
+        }
     if(lateness > max_lateness){
      printf("new max lateness: %d\n", lateness);
        // late_file = fopen(late_file_name, "a");
@@ -261,7 +273,7 @@ void task_suspend(edd_task_t* sender){
 }
 
 void task_resume(edd_task_t* sender){
-    //printf("here 7777");
+    //printf("here 7777");S
     if(sender->periodic){
         sender->deadline = xTaskGetTickCount() + sender->period;
     }
@@ -294,6 +306,13 @@ void task_wait_for_evt(edd_task_t* sender){
         lateness_file = fopen(lateness_file_name, "a");
         lateTask_file = fopen(lateTask_file_name, "a");
         #endif
+         if(lateness>sender->max_Lateness){
+            late_file = fopen(late_file_name, "a");
+            //printf("%s new max lateness: %d\n", sender->name, (int)lateness);
+            fprintf(late_file, "%s new max lateness: %d\n", sender->name, (int)lateness);
+            fclose(late_file);
+            sender->max_Lateness=lateness;
+        }
         if(lateness > max_lateness){
            printf("new max lateness: %d\n", lateness);
           //  late_file = fopen(late_file_name, "a");
@@ -393,7 +412,7 @@ void monitor_task(void* pvParameters)
         if (current_time < MAX_TIME)
         {
             //printf("here 3434");
-            printf("Current time: %d ms\n", current_time);
+            //printf("Current time: %d ms\n", current_time);
 
             srand(current_time);
 

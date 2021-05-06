@@ -88,7 +88,10 @@ void init_app() {
     act_task_data.task_func = activity_task;
     act_task_data.task = &act_task_handle;
     act_task_data.first_time = true;
- 
+    act_task_data.max_Lateness =-1000;
+    strcpy(act_task_data.name,"act");
+    
+
     hrm_task_data.deadline = HRM_TASK_PERIOD;
     hrm_task_data.periodic = true;
     hrm_task_data.period = HRM_TASK_PERIOD;
@@ -96,20 +99,29 @@ void init_app() {
     hrm_task_data.task_func = hr_monitor_task;
     hrm_task_data.task = &hrm_task_handle;
     hrm_task_data.first_time = true;
- 
+    hrm_task_data.max_Lateness =-1000;
+    strcpy(hrm_task_data.name,"hrm");
+
+
     app_task_data.deadline = 0;
     app_task_data.periodic = false;
     app_task_data.relative_deadline = APP_TASK_RELATIVE_DEADLINE;
     app_task_data.task_func = app_task;
     app_task_data.task = &app_task_handle;
     app_task_data.first_time = true;
- 
+    app_task_data.max_Lateness =-1000;
+    strcpy(app_task_data.name,"app");
+
+
     ui_task_data.deadline = 0;
     ui_task_data.periodic = false;
     ui_task_data.relative_deadline = UI_TASK_RELATIVE_DEADLINE;
     ui_task_data.task_func = ui_task;
     ui_task_data.task = &ui_task_handle;
     ui_task_data.first_time = true;
+    ui_task_data.max_Lateness =-1000;
+    strcpy(ui_task_data.name,"ui");
+
 }
  
 void hw_timer_callback(TimerHandle_t xTimer) {
@@ -269,7 +281,7 @@ void activity_task(void* pvParameters) {
 		xQueueReceive(act_queue_handle, &message, portMAX_DELAY); //wait for message
         //printf("here 8");
         #ifdef MEASURE_TASK_SWITCH
-        fprintf(log_file, "activity: %ld\n", clock());
+        fprintf(log_file, "activity: %ld\n", xTaskGetTickCount());
         #endif	
         //printf("message received\n");
  
@@ -362,7 +374,7 @@ void hr_monitor_task(void* pvParameters){
 		xQueueReceive(hrm_queue_handle, &message, portMAX_DELAY);
         //printf("here 11");
         #ifdef MEASURE_TASK_SWITCH
-        fprintf(log_file, "hrm: %ld\n", clock());
+        fprintf(log_file, "hrm: %ld\n", xTaskGetTickCount());
         #endif
 		for(int j = 0; j<10; j++){
 			tensampleold[j] = tensamplenew[j];
@@ -420,7 +432,7 @@ void app_task(void* pvParameters) {
         task_wait_for_evt(&app_task_data);
         xQueueReceive(app_queue_handle, &in_message, portMAX_DELAY);
         #ifdef MEASURE_TASK_SWITCH
-        fprintf(log_file, "app: %d\n", clock());
+        fprintf(log_file, "app: %d\n", xTaskGetTickCount());
         #endif
         task_got_evt(&app_task_data);
         //printf("here 14");
@@ -432,7 +444,7 @@ void app_task(void* pvParameters) {
                 sprintf(c, "%.0f \n", hrate);
                 out_message.type = APP_HEARTRATE;
  
-                memcpy(out_message.data, c, strlen(reminderStr)+1);
+                memcpy(out_message.data, c, strlen(c)+1);
                 //printf("here 15");
                 xQueueSend(ui_queue_handle, &out_message, portMAX_DELAY);
                 break;
@@ -521,14 +533,14 @@ void app_task(void* pvParameters) {
 void ui_task(void* pvParameters) {
     task_msg_t message = {};
     task_msg_t msg = {};
-    char messageStr[30]; 
+    char messageStr[100]; 
  
     while (1) {
         //printf("ui task\n");
         task_wait_for_evt(&ui_task_data);
         xQueueReceive(ui_queue_handle, &message, portMAX_DELAY); //wait for message
         #ifdef MEASURE_TASK_SWITCH
-        fprintf(log_file, "ui: %ld\n", clock());
+        fprintf(log_file, "ui: %ld\n", xTaskGetTickCount());
         #endif
         task_got_evt(&ui_task_data);
  //printf("here 24");
